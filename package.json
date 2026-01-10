@@ -1,6 +1,6 @@
 {
   "name": "@riotprompt/riotplan",
-  "version": "0.0.1",
+  "version": "0.0.2-dev.0",
   "description": "Framework for long-lived, stateful AI workflows (plans)",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -70,4 +70,3 @@
     "vitest": "^3.2.4"
   }
 }
-
