@@ -1,6 +1,6 @@
 {
   "name": "@riotprompt/riotplan",
-  "version": "0.0.2-dev.0",
+  "version": "0.0.2",
   "description": "Framework for long-lived, stateful AI workflows (plans)",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -14,9 +14,13 @@
     }
   },
   "scripts": {
+    "clean": "rm -rf dist",
     "build": "vite build",
-    "test": "vitest run",
-    "lint": "eslint src"
+    "test": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src",
+    "precommit": "npm run lint && npm run test",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
     "plan",
@@ -31,7 +35,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kjerneverk/riotplan"
+    "url": "https://github.com/kjerneverk/riotplan"
   },
   "dependencies": {
     "glob": "^11.0.3",
@@ -61,6 +65,7 @@
     "@types/node": "^22.15.30",
     "@typescript-eslint/eslint-plugin": "^8.34.0",
     "@typescript-eslint/parser": "^8.34.0",
+    "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^9.28.0",
     "eslint-plugin-import": "^2.31.0",
     "globals": "^16.2.0",

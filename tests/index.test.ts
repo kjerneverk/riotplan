@@ -13,7 +13,7 @@ import {
   executeStep,
   resumePlan,
   updatePlanState,
-} from './index.js';
+} from '../src/index.js';
 
 describe('VERSION', () => {
   it('should export version string', () => {

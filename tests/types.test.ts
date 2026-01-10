@@ -19,8 +19,8 @@ import type {
   PlanResult,
   StatusDocument,
   ExecutionPlanDocument,
-} from './types.js';
-import { PLAN_CONVENTIONS } from './types.js';
+} from '../src/types.js';
+import { PLAN_CONVENTIONS } from '../src/types.js';
 
 describe('TaskStatus type', () => {
   it('should accept valid status values', () => {
