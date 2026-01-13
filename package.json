@@ -1,17 +1,18 @@
 {
   "name": "@riotprompt/riotplan",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Framework for long-lived, stateful AI workflows (plans)",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     }
+  },
+  "engines": {
+    "node": ">=24.0.0"
   },
   "scripts": {
     "clean": "rm -rf dist",
@@ -38,14 +39,13 @@
     "url": "https://github.com/kjerneverk/riotplan"
   },
   "dependencies": {
-    "glob": "^11.0.3",
     "js-yaml": "^4.1.1",
     "marked": "^16.0.0"
   },
   "peerDependencies": {
-    "@riotprompt/agentic": "^0.0.4",
-    "@riotprompt/execution": "^0.0.3",
-    "@riotprompt/riotprompt": "^0.0.20"
+    "@riotprompt/agentic": "^0.0.5",
+    "@riotprompt/execution": "^0.0.4",
+    "@riotprompt/riotprompt": "^0.0.21"
   },
   "peerDependenciesMeta": {
     "@riotprompt/agentic": {
