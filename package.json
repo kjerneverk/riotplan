@@ -1,6 +1,6 @@
 {
   "name": "@riotprompt/riotplan",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Framework for long-lived, stateful AI workflows (plans)",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -43,9 +43,9 @@
     "marked": "^16.0.0"
   },
   "peerDependencies": {
-    "@riotprompt/agentic": "^0.0.1",
-    "@riotprompt/execution": "^0.0.1",
-    "@riotprompt/riotprompt": "^1.0.0"
+    "@riotprompt/agentic": "^0.0.4",
+    "@riotprompt/execution": "^0.0.3",
+    "@riotprompt/riotprompt": "^0.0.20"
   },
   "peerDependenciesMeta": {
     "@riotprompt/agentic": {
