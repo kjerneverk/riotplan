@@ -124,6 +124,118 @@ export {
     type MoveStepResult,
 } from "./steps/operations.js";
 
+// Dependency Operations
+export {
+    // Parsing
+    parseDependenciesFromContent,
+    parseDependenciesFromFile,
+    parseAllDependencies,
+    // Graph Building
+    buildDependencyGraph,
+    buildDependencyGraphFromMap,
+    // Validation
+    validateDependencies,
+    // Critical Path
+    findCriticalPath,
+    // Execution Order
+    computeExecutionOrder,
+    // Helpers
+    getReadySteps,
+    getBlockedSteps,
+    getDependencyChain,
+    updateStepDependencies,
+    // Types
+    type StepDependency,
+    type DependencyGraph,
+    type DependencyValidation,
+    type DependencyError,
+    type DependencyWarning,
+    type CriticalPath,
+    type ExecutionOrder,
+} from "./dependencies/index.js";
+
+// Relationship Operations (Cross-Plan Dependencies)
+export {
+    // Parsing
+    parseRelationshipsFromContent,
+    parseRelationshipsFromPlan,
+    // Management
+    addRelationship,
+    removeRelationship,
+    createBidirectionalRelationship,
+    // Validation
+    validateRelationships,
+    // Queries
+    getRelationshipsByType,
+    getInverseRelationType,
+    getBlockingPlans,
+    getBlockedPlans,
+    getParentPlan,
+    getChildPlans,
+    getRelatedPlans,
+    // Serialization
+    generateRelationshipsMarkdown,
+    updatePlanRelationships,
+    // Types
+    type AddRelationshipOptions,
+    type AddRelationshipResult,
+    type RelationshipValidation,
+    type InvalidRelationship,
+    type ParsedRelationship,
+} from "./relationships/index.js";
+
+// Plan Registry Operations
+export {
+    // Registry Management
+    createRegistry,
+    loadRegistry,
+    saveRegistry,
+    getDefaultRegistryPath,
+    // Plan Discovery
+    scanForPlans,
+    // Plan Registration
+    registerPlan,
+    unregisterPlan,
+    refreshPlan,
+    refreshAllPlans,
+    // Search and Query
+    searchPlans,
+    getPlanByCode,
+    getPlanByPath,
+    getPlansByStatus,
+    // Statistics
+    getRegistryStats,
+    // Types
+    type RegisteredPlan,
+    type PlanRegistry,
+    type RegistryOptions,
+    type SearchResult,
+    type SearchOptions,
+    type RegistryStats,
+} from "./registry/index.js";
+
+// Retrospective Operations
+export {
+    generateRetrospective,
+    generateRetrospectiveMarkdown,
+    createRetrospective,
+    type Retrospective,
+    type GenerateRetrospectiveOptions,
+} from "./retrospective/index.js";
+
+// Execution Operations
+export {
+    createExecutor,
+    executeStep as executeStepWithExecutor,
+    executePendingSteps,
+    MockStepExecutor,
+    type ExecutionProviderType,
+    type ProviderConfig,
+    type ExecutionContext,
+    type StepExecutor,
+    type ExecutorFactory,
+} from "./execution/index.js";
+
 // Version
 export const VERSION = "0.0.1";
 

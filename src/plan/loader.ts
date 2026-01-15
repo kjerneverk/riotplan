@@ -20,6 +20,7 @@ import type {
     EvidenceType,
 } from "../types.js";
 import { PLAN_CONVENTIONS } from "../types.js";
+import { parseDependenciesFromContent } from "../dependencies/index.js";
 
 // ===== OPTIONS =====
 
@@ -327,6 +328,9 @@ async function loadSteps(
             continue;
         }
 
+        // Parse dependencies from step content
+        const dependencies = parseDependenciesFromContent(content);
+
         steps.push({
             number,
             code,
@@ -334,6 +338,7 @@ async function loadSteps(
             title: extractTitle(content) || formatCode(code),
             description: extractDescription(content),
             status: "pending", // Default, may be overridden by STATUS.md
+            dependencies: dependencies.length > 0 ? dependencies : undefined,
             filePath,
         });
     }

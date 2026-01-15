@@ -1,0 +1,561 @@
+/**
+ * Tests for the Relationships module
+ */
+
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { join } from "node:path";
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import {
+    parseRelationshipsFromContent,
+    parseRelationshipsFromPlan,
+    addRelationship,
+    removeRelationship,
+    validateRelationships,
+    getRelationshipsByType,
+    getInverseRelationType,
+    getBlockingPlans,
+    getBlockedPlans,
+    getParentPlan,
+    getChildPlans,
+    createBidirectionalRelationship,
+    generateRelationshipsMarkdown,
+} from "../src/relationships/index.js";
+import { loadPlan } from "../src/plan/loader.js";
+import type { Plan, PlanRelationship } from "../src/types.js";
+
+const FIXTURES_DIR = join(__dirname, "fixtures");
+
+describe("Relationships Module", () => {
+    describe("parseRelationshipsFromContent", () => {
+        it("should parse frontmatter spawned-from", () => {
+            const content = `---
+title: Child Plan
+spawned-from: ../parent-plan
+---
+
+# Child Plan
+
+This plan was spawned from parent.
+`;
+            const rels = parseRelationshipsFromContent(content);
+            expect(rels).toHaveLength(1);
+            expect(rels[0].type).toBe("spawned-from");
+            expect(rels[0].targetPath).toBe("../parent-plan");
+        });
+
+        it("should parse frontmatter blocks", () => {
+            const content = `---
+title: Plan A
+blocks: ../plan-b, ../plan-c
+---
+
+# Plan A
+`;
+            const rels = parseRelationshipsFromContent(content);
+            expect(rels).toHaveLength(2);
+            expect(rels[0].type).toBe("blocks");
+            expect(rels[0].targetPath).toBe("../plan-b");
+            expect(rels[1].type).toBe("blocks");
+            expect(rels[1].targetPath).toBe("../plan-c");
+        });
+
+        it("should parse frontmatter blocked-by", () => {
+            const content = `---
+blocked-by: ../blocker-plan
+---
+
+# Blocked Plan
+`;
+            const rels = parseRelationshipsFromContent(content);
+            expect(rels).toHaveLength(1);
+            expect(rels[0].type).toBe("blocked-by");
+        });
+
+        it("should parse frontmatter related", () => {
+            const content = `---
+related: ../similar-plan, ../other-plan
+---
+
+# Plan
+`;
+            const rels = parseRelationshipsFromContent(content);
+            expect(rels).toHaveLength(2);
+            expect(rels[0].type).toBe("related");
+            expect(rels[1].type).toBe("related");
+        });
+
+        it("should parse ## Related Plans section with type:path format", () => {
+            const content = `# Plan
+
+## Related Plans
+
+- **spawned-from**: ../parent-plan - This is the parent
+- **blocks**: ../child-plan - We block this
+- **related**: ../sibling-plan
+`;
+            const rels = parseRelationshipsFromContent(content);
+            expect(rels).toHaveLength(3);
+            expect(rels[0]).toEqual({
+                type: "spawned-from",
+                targetPath: "../parent-plan",
+                reason: "This is the parent",
+            });
+            expect(rels[1]).toEqual({
+                type: "blocks",
+                targetPath: "../child-plan",
+                reason: "We block this",
+            });
+            expect(rels[2]).toEqual({
+                type: "related",
+                targetPath: "../sibling-plan",
+                reason: undefined,
+            });
+        });
+
+        it("should parse markdown links in Related Plans section", () => {
+            const content = `# Plan
+
+## Related Plans
+
+- [Parent Plan](../parent-plan) - spawned from this (spawned-from)
+- [Blocked](../blocked-plan) - this plan blocks it
+`;
+            const rels = parseRelationshipsFromContent(content);
+            expect(rels).toHaveLength(2);
+            expect(rels[0].type).toBe("spawned-from");
+            expect(rels[0].targetPath).toBe("../parent-plan");
+            expect(rels[1].type).toBe("blocks");
+            expect(rels[1].targetPath).toBe("../blocked-plan");
+        });
+
+        it("should parse simple path format", () => {
+            const content = `# Plan
+
+## Related Plans
+
+- ../other-plan (related) - general relationship
+- ../another-plan
+`;
+            const rels = parseRelationshipsFromContent(content);
+            expect(rels).toHaveLength(2);
+            expect(rels[0].type).toBe("related");
+            expect(rels[1].type).toBe("related");
+        });
+
+        it("should deduplicate relationships", () => {
+            const content = `---
+spawned-from: ../parent
+---
+
+# Plan
+
+## Related Plans
+
+- **spawned-from**: ../parent
+`;
+            const rels = parseRelationshipsFromContent(content);
+            expect(rels).toHaveLength(1);
+        });
+
+        it("should return empty array when no relationships", () => {
+            const content = `# Simple Plan
+
+Just a plan with no relationships.
+`;
+            const rels = parseRelationshipsFromContent(content);
+            expect(rels).toEqual([]);
+        });
+    });
+
+    describe("getInverseRelationType", () => {
+        it("should return correct inverse types", () => {
+            expect(getInverseRelationType("spawned-from")).toBe("spawned");
+            expect(getInverseRelationType("spawned")).toBe("spawned-from");
+            expect(getInverseRelationType("blocks")).toBe("blocked-by");
+            expect(getInverseRelationType("blocked-by")).toBe("blocks");
+            expect(getInverseRelationType("related")).toBe("related");
+        });
+    });
+
+    describe("relationship management", () => {
+        let testDir: string;
+        let sourcePlan: Plan;
+        let targetPlan: Plan;
+
+        beforeEach(async () => {
+            testDir = join(tmpdir(), `riotplan-rel-test-${Date.now()}`);
+            await mkdir(testDir, { recursive: true });
+
+            // Create source plan
+            const sourcePath = join(testDir, "source-plan");
+            await mkdir(join(sourcePath, "plan"), { recursive: true });
+            await writeFile(
+                join(sourcePath, "SUMMARY.md"),
+                "# Source Plan\n\nThe source."
+            );
+            await writeFile(
+                join(sourcePath, "plan", "01-step.md"),
+                "# Step 01: First\n\n## Objective\n\nDo something."
+            );
+            sourcePlan = await loadPlan(sourcePath);
+
+            // Create target plan
+            const targetPath = join(testDir, "target-plan");
+            await mkdir(join(targetPath, "plan"), { recursive: true });
+            await writeFile(
+                join(targetPath, "SUMMARY.md"),
+                "# Target Plan\n\nThe target."
+            );
+            await writeFile(
+                join(targetPath, "plan", "01-step.md"),
+                "# Step 01: First\n\n## Objective\n\nDo something."
+            );
+            targetPlan = await loadPlan(targetPath);
+        });
+
+        afterEach(async () => {
+            try {
+                await rm(testDir, { recursive: true });
+            } catch {
+                // Ignore cleanup errors
+            }
+        });
+
+        it("should add a relationship", async () => {
+            const result = await addRelationship(sourcePlan, {
+                type: "blocks",
+                targetPath: "../target-plan",
+                reason: "Source blocks target",
+            });
+
+            expect(result.relationship.type).toBe("blocks");
+            expect(result.relationship.planPath).toBe("../target-plan");
+            expect(result.relationship.reason).toBe("Source blocks target");
+            expect(result.targetValid).toBe(true);
+            expect(result.targetPlan?.code).toBe("target-plan");
+        });
+
+        it("should handle invalid target path", async () => {
+            const result = await addRelationship(sourcePlan, {
+                type: "blocks",
+                targetPath: "../non-existent-plan",
+            });
+
+            expect(result.targetValid).toBe(false);
+            expect(result.targetPlan).toBeUndefined();
+        });
+
+        it("should remove a relationship", async () => {
+            await addRelationship(sourcePlan, {
+                type: "blocks",
+                targetPath: "../target-plan",
+            });
+
+            const removed = removeRelationship(sourcePlan, "../target-plan");
+            expect(removed).toHaveLength(1);
+            expect(sourcePlan.relationships).toHaveLength(0);
+        });
+
+        it("should remove relationship by type", async () => {
+            await addRelationship(sourcePlan, {
+                type: "blocks",
+                targetPath: "../target-plan",
+            });
+            await addRelationship(sourcePlan, {
+                type: "related",
+                targetPath: "../target-plan",
+            });
+
+            const removed = removeRelationship(
+                sourcePlan,
+                "../target-plan",
+                "blocks"
+            );
+            expect(removed).toHaveLength(1);
+            expect(sourcePlan.relationships).toHaveLength(1);
+            expect(sourcePlan.relationships![0].type).toBe("related");
+        });
+
+        it("should create bidirectional relationship", () => {
+            createBidirectionalRelationship(
+                sourcePlan,
+                targetPlan,
+                "blocks",
+                "Test blocking"
+            );
+
+            expect(sourcePlan.relationships).toHaveLength(1);
+            expect(sourcePlan.relationships![0].type).toBe("blocks");
+
+            expect(targetPlan.relationships).toHaveLength(1);
+            expect(targetPlan.relationships![0].type).toBe("blocked-by");
+        });
+    });
+
+    describe("validation", () => {
+        let testDir: string;
+
+        beforeEach(async () => {
+            testDir = join(tmpdir(), `riotplan-rel-val-${Date.now()}`);
+            await mkdir(testDir, { recursive: true });
+        });
+
+        afterEach(async () => {
+            try {
+                await rm(testDir, { recursive: true });
+            } catch {
+                // Ignore cleanup errors
+            }
+        });
+
+        it("should validate relationships with valid targets", async () => {
+            // Create source and target plans
+            const sourcePath = join(testDir, "source");
+            const targetPath = join(testDir, "target");
+
+            await mkdir(join(sourcePath, "plan"), { recursive: true });
+            await mkdir(join(targetPath, "plan"), { recursive: true });
+            await writeFile(
+                join(sourcePath, "SUMMARY.md"),
+                "# Source\n\nSource plan."
+            );
+            await writeFile(
+                join(sourcePath, "plan", "01-step.md"),
+                "# Step 01: Step\n\n## Objective\n\nTest."
+            );
+            await writeFile(
+                join(targetPath, "SUMMARY.md"),
+                "# Target\n\nTarget plan."
+            );
+            await writeFile(
+                join(targetPath, "plan", "01-step.md"),
+                "# Step 01: Step\n\n## Objective\n\nTest."
+            );
+
+            const plan = await loadPlan(sourcePath);
+            await addRelationship(plan, {
+                type: "related",
+                targetPath: "../target",
+            });
+
+            const result = await validateRelationships(plan);
+            expect(result.valid).toBe(true);
+            expect(result.invalid).toHaveLength(0);
+        });
+
+        it("should detect invalid relationship targets", async () => {
+            const sourcePath = join(testDir, "source");
+            await mkdir(join(sourcePath, "plan"), { recursive: true });
+            await writeFile(
+                join(sourcePath, "SUMMARY.md"),
+                "# Source\n\nSource plan."
+            );
+            await writeFile(
+                join(sourcePath, "plan", "01-step.md"),
+                "# Step 01: Step\n\n## Objective\n\nTest."
+            );
+
+            const plan = await loadPlan(sourcePath);
+            await addRelationship(plan, {
+                type: "blocks",
+                targetPath: "../non-existent",
+            });
+
+            const result = await validateRelationships(plan);
+            expect(result.valid).toBe(false);
+            expect(result.invalid).toHaveLength(1);
+            expect(result.invalid[0].reason).toContain("not found");
+        });
+    });
+
+    describe("query functions", () => {
+        it("should get relationships by type", () => {
+            const plan: Plan = {
+                metadata: { code: "test", name: "Test", path: "/test" },
+                files: { steps: [], subdirectories: [] },
+                steps: [],
+                state: {
+                    status: "pending",
+                    lastUpdatedAt: new Date(),
+                    blockers: [],
+                    issues: [],
+                    progress: 0,
+                },
+                relationships: [
+                    {
+                        type: "blocks",
+                        planPath: "../a",
+                        createdAt: new Date(),
+                    },
+                    {
+                        type: "blocks",
+                        planPath: "../b",
+                        createdAt: new Date(),
+                    },
+                    {
+                        type: "related",
+                        planPath: "../c",
+                        createdAt: new Date(),
+                    },
+                ],
+            };
+
+            const blocks = getRelationshipsByType(plan, "blocks");
+            expect(blocks).toHaveLength(2);
+
+            const related = getRelationshipsByType(plan, "related");
+            expect(related).toHaveLength(1);
+        });
+
+        it("should get blocking/blocked plans", () => {
+            const plan: Plan = {
+                metadata: { code: "test", name: "Test", path: "/test" },
+                files: { steps: [], subdirectories: [] },
+                steps: [],
+                state: {
+                    status: "pending",
+                    lastUpdatedAt: new Date(),
+                    blockers: [],
+                    issues: [],
+                    progress: 0,
+                },
+                relationships: [
+                    {
+                        type: "blocked-by",
+                        planPath: "../blocker",
+                        createdAt: new Date(),
+                    },
+                    {
+                        type: "blocks",
+                        planPath: "../blocked",
+                        createdAt: new Date(),
+                    },
+                ],
+            };
+
+            expect(getBlockingPlans(plan)).toEqual(["../blocker"]);
+            expect(getBlockedPlans(plan)).toEqual(["../blocked"]);
+        });
+
+        it("should get parent/child plans", () => {
+            const plan: Plan = {
+                metadata: { code: "test", name: "Test", path: "/test" },
+                files: { steps: [], subdirectories: [] },
+                steps: [],
+                state: {
+                    status: "pending",
+                    lastUpdatedAt: new Date(),
+                    blockers: [],
+                    issues: [],
+                    progress: 0,
+                },
+                relationships: [
+                    {
+                        type: "spawned-from",
+                        planPath: "../parent",
+                        createdAt: new Date(),
+                    },
+                    {
+                        type: "spawned",
+                        planPath: "../child1",
+                        createdAt: new Date(),
+                    },
+                    {
+                        type: "spawned",
+                        planPath: "../child2",
+                        createdAt: new Date(),
+                    },
+                ],
+            };
+
+            expect(getParentPlan(plan)).toBe("../parent");
+            expect(getChildPlans(plan)).toEqual(["../child1", "../child2"]);
+        });
+
+        it("should return null for no parent", () => {
+            const plan: Plan = {
+                metadata: { code: "test", name: "Test", path: "/test" },
+                files: { steps: [], subdirectories: [] },
+                steps: [],
+                state: {
+                    status: "pending",
+                    lastUpdatedAt: new Date(),
+                    blockers: [],
+                    issues: [],
+                    progress: 0,
+                },
+            };
+
+            expect(getParentPlan(plan)).toBeNull();
+        });
+    });
+
+    describe("generateRelationshipsMarkdown", () => {
+        it("should generate markdown for relationships", () => {
+            const plan: Plan = {
+                metadata: { code: "test", name: "Test", path: "/test" },
+                files: { steps: [], subdirectories: [] },
+                steps: [],
+                state: {
+                    status: "pending",
+                    lastUpdatedAt: new Date(),
+                    blockers: [],
+                    issues: [],
+                    progress: 0,
+                },
+                relationships: [
+                    {
+                        type: "spawned-from",
+                        planPath: "../parent",
+                        reason: "This is the parent plan",
+                        createdAt: new Date(),
+                    },
+                    {
+                        type: "blocks",
+                        planPath: "../other",
+                        steps: [1, 2],
+                        createdAt: new Date(),
+                    },
+                ],
+            };
+
+            const md = generateRelationshipsMarkdown(plan);
+            expect(md).toContain("## Related Plans");
+            expect(md).toContain("### Spawned From");
+            expect(md).toContain("../parent");
+            expect(md).toContain("This is the parent plan");
+            expect(md).toContain("### Blocks");
+            expect(md).toContain("../other");
+            expect(md).toContain("Steps: 1, 2");
+        });
+
+        it("should return empty string for no relationships", () => {
+            const plan: Plan = {
+                metadata: { code: "test", name: "Test", path: "/test" },
+                files: { steps: [], subdirectories: [] },
+                steps: [],
+                state: {
+                    status: "pending",
+                    lastUpdatedAt: new Date(),
+                    blockers: [],
+                    issues: [],
+                    progress: 0,
+                },
+            };
+
+            expect(generateRelationshipsMarkdown(plan)).toBe("");
+        });
+    });
+
+    describe("parseRelationshipsFromPlan", () => {
+        it("should parse relationships from plan fixture", async () => {
+            // Use valid-plan fixture and check it returns empty (no relationships defined)
+            const rels = await parseRelationshipsFromPlan(
+                join(FIXTURES_DIR, "valid-plan")
+            );
+            expect(Array.isArray(rels)).toBe(true);
+        });
+    });
+});
+

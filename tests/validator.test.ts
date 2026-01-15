@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { validatePlan, createPlan, loadPlan } from "../src/index.js";
+import { validatePlan, createPlan } from "../src/index.js";
 import { rm, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -125,7 +125,7 @@ describe("validatePlan", () => {
         });
 
         it("should detect self-dependency", async () => {
-            // Create a plan with self-dependency
+            // Create a plan with self-dependency in the file
             const planPath = join(testDir, "self-dep");
             await mkdir(join(planPath, "plan"), { recursive: true });
             await writeFile(
@@ -150,18 +150,16 @@ Test step.
 `
             );
 
-            // Load and modify to add dependency
-            const plan = await loadPlan(planPath);
-            plan.steps[0].dependencies = [1]; // Self-dependency
-
-            // Validate with the modified plan
+            // Validate the plan - should detect self-dependency from file
             const result = await validatePlan(planPath, {
                 validateDependencies: true,
             });
 
-            // Note: The validator loads the plan fresh, so we need to test differently
-            // For now, just verify the plan loads without self-dep errors from file
-            expect(result.valid).toBe(true);
+            // The loader now parses dependencies from files, so self-dep is detected
+            expect(result.valid).toBe(false);
+            expect(
+                result.errors.some((e) => e.code === "SELF_DEPENDENCY")
+            ).toBe(true);
         });
 
         it("should skip dependency validation when disabled", async () => {
