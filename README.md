@@ -168,3 +168,5 @@ A plan provides structure for complex, iterative AI-assisted work where:
 
 Apache-2.0
 
+<!-- v1.0.0 -->
+
