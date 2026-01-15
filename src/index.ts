@@ -29,6 +29,25 @@
 export type {
     TaskStatus,
     Priority,
+    // Feedback types
+    FeedbackPlatform,
+    FeedbackParticipant,
+    FeedbackContext,
+    FeedbackRecord,
+    // Evidence types
+    EvidenceType,
+    EvidenceRecord,
+    // Revision/History types
+    PlanRevision,
+    PlanMilestone,
+    PlanHistory,
+    // Context types
+    ContextId,
+    PlanContextDefinition,
+    // Cross-plan relationship types
+    RelationshipType,
+    PlanRelationship,
+    // Plan structure types
     PlanStep,
     PlanPhase,
     Blocker,
@@ -47,94 +66,69 @@ export type {
 // Constants
 export { PLAN_CONVENTIONS } from "./types.js";
 
+// Plan Operations
+export { loadPlan, type LoadPlanOptions } from "./plan/loader.js";
+export {
+    createPlan,
+    type CreatePlanConfig,
+    type CreatePlanResult,
+} from "./plan/creator.js";
+
+export {
+    validatePlan,
+    type ValidationResult,
+    type ValidationError,
+    type ValidationWarning,
+    type ValidationInfo,
+    type FixableIssue,
+    type ValidateOptions,
+} from "./plan/validator.js";
+
+// Feedback Operations
+export {
+    createFeedback,
+    listFeedback,
+    getFeedback,
+    type CreateFeedbackOptions,
+    type CreateFeedbackResult,
+} from "./feedback/index.js";
+
+// Status Operations
+export {
+    parseStatus,
+    type ParseStatusOptions,
+    type ParseStatusResult,
+} from "./status/parser.js";
+
+export {
+    generateStatus,
+    updateStatus,
+    type GenerateStatusOptions,
+    type UpdateStatusOptions,
+} from "./status/generator.js";
+
+// Step Operations
+export {
+    insertStep,
+    removeStep,
+    moveStep,
+    blockStep,
+    unblockStep,
+    completeStep,
+    startStep,
+    skipStep,
+    failStep,
+    type InsertStepOptions,
+    type InsertStepResult,
+    type RemoveStepResult,
+    type MoveStepResult,
+} from "./steps/operations.js";
+
 // Version
 export const VERSION = "0.0.1";
 
 // ===== STUB IMPLEMENTATIONS =====
 // These will be implemented as the project develops
-
-/**
- * Load a plan from a directory
- *
- * @param path - Path to the plan directory
- * @returns The loaded plan
- *
- * @example
- * ```typescript
- * const plan = await loadPlan('./prompts/big-splitup');
- * console.log(plan.metadata.code); // 'big-splitup'
- * console.log(plan.steps.length);  // 11
- * ```
- *
- * @stub Not yet implemented
- */
-export async function loadPlan(_path: string): Promise<never> {
-    throw new Error(
-        "riotplan.loadPlan is not yet implemented. Coming in v0.1.0!"
-    );
-}
-
-/**
- * Create a new plan
- *
- * @param config - Plan configuration
- * @returns The created plan
- *
- * @example
- * ```typescript
- * const plan = await createPlan({
- *   code: 'my-feature',
- *   name: 'My Feature Implementation',
- *   path: './prompts/my-feature',
- *   steps: [
- *     { title: 'Setup', description: 'Initial setup' },
- *     { title: 'Implementation', description: 'Core work' },
- *     { title: 'Testing', description: 'Verify it works' },
- *   ]
- * });
- * ```
- *
- * @stub Not yet implemented
- */
-export async function createPlan(_config: {
-  code: string;
-  name: string;
-  path: string;
-  description?: string;
-  steps?: Array<{ title: string; description?: string }>;
-}): Promise<never> {
-    throw new Error(
-        "riotplan.createPlan is not yet implemented. Coming in v0.1.0!"
-    );
-}
-
-/**
- * Parse a STATUS.md file
- *
- * @param content - The STATUS.md content
- * @returns Parsed status document
- *
- * @stub Not yet implemented
- */
-export function parseStatus(_content: string): never {
-    throw new Error(
-        "riotplan.parseStatus is not yet implemented. Coming in v0.1.0!"
-    );
-}
-
-/**
- * Generate a STATUS.md file
- *
- * @param plan - The plan to generate status for
- * @returns STATUS.md content
- *
- * @stub Not yet implemented
- */
-export function generateStatus(_plan: unknown): never {
-    throw new Error(
-        "riotplan.generateStatus is not yet implemented. Coming in v0.1.0!"
-    );
-}
 
 /**
  * Execute a plan step

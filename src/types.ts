@@ -31,6 +31,265 @@ export type TaskStatus =
  */
 export type Priority = "high" | "medium" | "low";
 
+// ===== FEEDBACK TYPES =====
+
+/**
+ * Platform where feedback occurred
+ */
+export type FeedbackPlatform =
+    | "cursor"
+    | "chatgpt"
+    | "slack"
+    | "email"
+    | "meeting"
+    | "voice"
+    | "document"
+    | "other";
+
+/**
+ * Participant in a feedback discussion
+ */
+export interface FeedbackParticipant {
+    /** Participant name */
+    name: string;
+
+    /** Type of participant */
+    type: "human" | "ai";
+
+    /** Model identifier for AI participants */
+    model?: string;
+}
+
+/**
+ * Context reference for feedback (file:lines)
+ */
+export interface FeedbackContext {
+    /** File path */
+    file: string;
+
+    /** Start line number */
+    startLine?: number;
+
+    /** End line number */
+    endLine?: number;
+
+    /** Content excerpt */
+    content?: string;
+}
+
+/**
+ * Feedback record for deliberation capture
+ *
+ * Captures discussions, decisions, and changes made during plan development.
+ * Each feedback record represents a deliberation session that influenced the plan.
+ */
+export interface FeedbackRecord {
+    /** Unique identifier (e.g., "001", "002") */
+    id: string;
+
+    /** Title/subject of the feedback */
+    title: string;
+
+    /** When created */
+    createdAt: Date;
+
+    /** Participants in the discussion */
+    participants: FeedbackParticipant[];
+
+    /** Platform where feedback occurred */
+    platform: FeedbackPlatform;
+
+    /** Plan version this feedback relates to */
+    planVersion?: string;
+
+    /** Related file references (file:lines) */
+    context?: FeedbackContext[];
+
+    /** What was proposed before feedback */
+    proposed?: string;
+
+    /** The feedback given */
+    feedback: string;
+
+    /** Discussion/debate content */
+    discussion?: string;
+
+    /** Resolution/outcome */
+    resolution?: string;
+
+    /** Changes made as a result */
+    changes?: string[];
+
+    /** Open questions remaining */
+    openQuestions?: string[];
+
+    /** Filename (e.g., "001-initial-review.md") */
+    filename: string;
+}
+
+// ===== EVIDENCE TYPES =====
+
+/**
+ * Type of evidence gathered during inception phase
+ */
+export type EvidenceType =
+    | "case-study" // what-happened-in-*.md
+    | "research" // research-*.md
+    | "analysis" // analysis-*.md
+    | "example" // example-*.md
+    | "external-review" // External AI review
+    | "reference"; // Reference material
+
+/**
+ * Evidence record for inception phase materials
+ *
+ * Tracks documentation gathered during plan inception to support
+ * decisions and provide context for future reference.
+ */
+export interface EvidenceRecord {
+    /** Unique identifier */
+    id: string;
+
+    /** Evidence type */
+    type: EvidenceType;
+
+    /** Title/description */
+    title: string;
+
+    /** When gathered */
+    createdAt: Date;
+
+    /** Source of evidence */
+    source?: string;
+
+    /** Filename */
+    filename: string;
+
+    /** Summary of key findings */
+    summary?: string;
+
+    /** Tags for categorization */
+    tags?: string[];
+}
+
+// ===== REVISION/HISTORY TYPES =====
+
+/**
+ * A single revision in plan history
+ */
+export interface PlanRevision {
+    /** Version string (e.g., "0.1", "0.2") */
+    version: string;
+
+    /** When this revision was created */
+    createdAt: Date;
+
+    /** Commit message/description */
+    message?: string;
+
+    /** Author */
+    author?: string;
+
+    /** Feedback record that triggered this revision */
+    feedbackId?: string;
+}
+
+/**
+ * A milestone in plan history (explicit cleanup point)
+ */
+export interface PlanMilestone {
+    /** Milestone name */
+    name: string;
+
+    /** Version at this milestone */
+    version: string;
+
+    /** When created */
+    createdAt: Date;
+
+    /** Description */
+    description?: string;
+}
+
+/**
+ * Plan version history
+ *
+ * Embedded version tracking without Git dependency.
+ * Supports milestones for explicit cleanup points.
+ */
+export interface PlanHistory {
+    /** All revisions in order */
+    revisions: PlanRevision[];
+
+    /** Current version */
+    currentVersion: string;
+
+    /** Milestones (explicit cleanup points) */
+    milestones?: PlanMilestone[];
+}
+
+// ===== CONTEXT TYPES =====
+
+/**
+ * Context identifier (e.g., "work", "personal", "work/kjerneverk")
+ */
+export type ContextId = string;
+
+/**
+ * Plan context definition
+ *
+ * Contexts allow organizing plans by domain (work, personal, etc.)
+ * with optional hierarchy support.
+ */
+export interface PlanContextDefinition {
+    /** Context identifier */
+    id: ContextId;
+
+    /** Display name */
+    name: string;
+
+    /** Parent context (for hierarchy) */
+    parent?: ContextId;
+
+    /** Default for this directory? */
+    isDefault?: boolean;
+}
+
+// ===== CROSS-PLAN RELATIONSHIP TYPES =====
+
+/**
+ * Type of relationship between plans
+ */
+export type RelationshipType =
+    | "spawned-from" // This plan was spawned from another
+    | "spawned" // This plan spawned another
+    | "blocks" // This plan blocks another
+    | "blocked-by" // This plan is blocked by another
+    | "related"; // General relationship
+
+/**
+ * Relationship between plans
+ *
+ * Tracks dependencies, spawning, and other relationships
+ * between plans for cross-plan coordination.
+ */
+export interface PlanRelationship {
+    /** Type of relationship */
+    type: RelationshipType;
+
+    /** Related plan path */
+    planPath: string;
+
+    /** Specific step(s) involved */
+    steps?: number[];
+
+    /** Reason for relationship */
+    reason?: string;
+
+    /** When established */
+    createdAt: Date;
+}
+
 // ===== PLAN STRUCTURE =====
 
 /**
@@ -192,29 +451,47 @@ export interface PlanMetadata {
  * Standard plan files
  */
 export interface PlanFiles {
-  /** Meta-prompt file (e.g., "big-splitup-prompt.md" or "prompt-of-prompts.md") */
-  metaPrompt?: string;
+    /** Meta-prompt file (e.g., "big-splitup-prompt.md" or "prompt-of-prompts.md") */
+    metaPrompt?: string;
 
-  /** Summary file */
-  summary?: string;
+    /** Summary file */
+    summary?: string;
 
-  /** Status file */
-  status?: string;
+    /** Status file */
+    status?: string;
 
-  /** Execution plan file */
-  executionPlan?: string;
+    /** Execution plan file */
+    executionPlan?: string;
 
-  /** README file */
-  readme?: string;
+    /** README file */
+    readme?: string;
 
-  /** Step files in order */
-  steps: string[];
+    /** Step files in order */
+    steps: string[];
 
-  /** Analysis directory */
-  analysisDir?: string;
+    /** Analysis directory */
+    analysisDir?: string;
 
-  /** Other directories (architecture/, implementation/, testing/) */
-  subdirectories: string[];
+    /** Other directories (architecture/, implementation/, testing/) */
+    subdirectories: string[];
+
+    /** Feedback directory */
+    feedbackDir?: string;
+
+    /** Feedback files */
+    feedbackFiles?: string[];
+
+    /** Evidence directory */
+    evidenceDir?: string;
+
+    /** Evidence files */
+    evidenceFiles?: string[];
+
+    /** History directory */
+    historyDir?: string;
+
+    /** CHANGELOG.md */
+    changelog?: string;
 }
 
 // ===== PLAN STATE =====
@@ -257,20 +534,35 @@ export interface PlanState {
  * Complete plan definition
  */
 export interface Plan {
-  /** Plan metadata */
-  metadata: PlanMetadata;
+    /** Plan metadata */
+    metadata: PlanMetadata;
 
-  /** Plan files */
-  files: PlanFiles;
+    /** Plan files */
+    files: PlanFiles;
 
-  /** Plan steps */
-  steps: PlanStep[];
+    /** Plan steps */
+    steps: PlanStep[];
 
-  /** Plan phases (optional grouping) */
-  phases?: PlanPhase[];
+    /** Plan phases (optional grouping) */
+    phases?: PlanPhase[];
 
-  /** Current state */
-  state: PlanState;
+    /** Current state */
+    state: PlanState;
+
+    /** Feedback records */
+    feedback?: FeedbackRecord[];
+
+    /** Evidence files */
+    evidence?: EvidenceRecord[];
+
+    /** Revision history */
+    history?: PlanHistory;
+
+    /** Context assignment */
+    context?: ContextId;
+
+    /** Relationships to other plans */
+    relationships?: PlanRelationship[];
 }
 
 // ===== EXECUTION =====
@@ -419,8 +711,19 @@ export const PLAN_CONVENTIONS = {
         "{code}.md",
     ],
 
-    /** Step file pattern */
+    /** Step file pattern (e.g., "01-step-name.md") */
     stepPattern: /^(\d{2})-(.+)\.md$/,
+
+    /** Feedback file pattern (e.g., "001-initial-review.md") */
+    feedbackPattern: /^(\d{3})-(.+)\.md$/,
+
+    /** Evidence file patterns */
+    evidencePatterns: [
+        /^what-happened-in-(.+)\.md$/,
+        /^research-(.+)\.md$/,
+        /^analysis-(.+)\.md$/,
+        /^example-(.+)\.md$/,
+    ],
 
     /** Standard files */
     standardFiles: {
@@ -428,6 +731,7 @@ export const PLAN_CONVENTIONS = {
         status: "STATUS.md",
         executionPlan: "EXECUTION_PLAN.md",
         readme: "README.md",
+        changelog: "CHANGELOG.md",
     },
 
     /** Standard directories */
@@ -437,6 +741,9 @@ export const PLAN_CONVENTIONS = {
         architecture: "architecture",
         implementation: "implementation",
         testing: "testing",
+        feedback: "feedback",
+        evidence: "evidence",
+        history: ".history",
     },
 
     /** Status emoji mapping */
@@ -448,5 +755,15 @@ export const PLAN_CONVENTIONS = {
         blocked: "⏸️",
         skipped: "⏭️",
     } as Record<TaskStatus, string>,
+
+    /** Emoji to status mapping (reverse lookup) */
+    emojiToStatus: {
+        "⬜": "pending",
+        "🔄": "in_progress",
+        "✅": "completed",
+        "❌": "failed",
+        "⏸️": "blocked",
+        "⏭️": "skipped",
+    } as Record<string, TaskStatus>,
 } as const;
 
