@@ -236,6 +236,24 @@ export {
     type ExecutorFactory,
 } from "./execution/index.js";
 
+// CLI Utilities
+export {
+    outputSuccess,
+    outputError,
+    outputWarning,
+    outputInfo,
+    getStatusIcon,
+    formatStatus,
+    outputStepList,
+    outputPlanSummary,
+    outputJson,
+    CliError,
+    handleError,
+    notImplemented,
+} from "./cli/utils/index.js";
+
+export { createProgram } from "./cli/cli.js";
+
 // Version
 export const VERSION = "0.0.1";
 

@@ -53,13 +53,168 @@ grunnverk/prompts/
 ## Installation
 
 ```bash
-npm install riotplan
+npm install -g @riotprompt/riotplan
 ```
 
-## Usage (Coming Soon)
+Or as a development dependency:
+
+```bash
+npm install --save-dev @riotprompt/riotplan
+```
+
+## Command-Line Interface
+
+### Creating a Plan
+
+Create a new plan:
+
+```bash
+riotplan plan init my-feature
+riotplan plan init my-feature --description "Implement the cool feature"
+riotplan plan init my-feature --template detailed --steps 5
+```
+
+Creates:
+
+```
+my-feature/
+├── my-feature-prompt.md     # Meta-prompt (prompt-of-prompts)
+├── SUMMARY.md               # Overview of the approach
+├── EXECUTION_PLAN.md        # Step-by-step strategy
+├── STATUS.md                # Current state
+└── plan/
+    ├── 01-analysis.md
+    ├── 02-design.md
+    ├── 03-implementation.md
+    └── ...
+```
+
+### Checking Status
+
+Show current plan status:
+
+```bash
+riotplan status                 # Current directory
+riotplan status ./my-plan       # Specific path
+riotplan status -v              # Verbose output
+riotplan status --json          # JSON output
+```
+
+Example output:
+
+```
+Plan: my-feature
+Status: 🔄 in_progress
+Progress: 45% (5/11 steps)
+Current Step: 06-testing
+Last Updated: 2026-01-10
+
+Blockers: None
+Issues: 1 (low priority)
+```
+
+### Managing Steps
+
+List steps in a plan:
+
+```bash
+riotplan step list              # All steps
+riotplan step list --pending    # Only pending
+riotplan step list --all        # Include completed
+```
+
+Example output:
+
+```
+✅ 01 analysis
+✅ 02 design
+✅ 03 architecture
+✅ 04 implementation-core
+🔄 05 implementation-api
+⬜ 06 testing
+⬜ 07 documentation
+⬜ 08 release
+```
+
+Add a new step:
+
+```bash
+riotplan step add "Integration Testing"
+riotplan step add "Security Audit" --number 07
+riotplan step add "Review" --after 05
+```
+
+Mark steps as started or completed:
+
+```bash
+riotplan step start 05
+riotplan step complete 05
+```
+
+### Managing Feedback
+
+Create and list feedback records:
+
+```bash
+riotplan feedback create        # Create feedback record
+riotplan feedback list          # List feedback records
+```
+
+### Validating Plans
+
+Validate plan structure:
+
+```bash
+riotplan plan validate          # Current directory
+riotplan plan validate ./my-plan # Specific path
+riotplan plan validate --fix    # Attempt to fix issues
+```
+
+Checks:
+- Required files exist (STATUS.md, EXECUTION_PLAN.md, etc.)
+- STATUS.md is parseable
+- Step files have valid numbering (01-*, 02-*, etc.)
+- Step dependencies are valid
+- No circular dependencies
+
+Archive a completed plan:
+
+```bash
+riotplan plan archive           # Current directory
+riotplan plan archive ./my-plan # Specific path
+```
+
+### Status Indicators
+
+| Symbol | Meaning |
+|--------|---------|
+| ⬜ | Pending |
+| 🔄 | In Progress |
+| ✅ | Completed |
+| ❌ | Failed |
+| ⏸️ | Blocked |
+| ⏭️ | Skipped |
+
+### Configuration
+
+Create `.riotplanrc.json` in your plan directory:
+
+```json
+{
+  "defaultProvider": "openai",
+  "autoUpdateStatus": true,
+  "stepTemplate": "detailed",
+  "analysis": {
+    "enabled": true,
+    "directory": "analysis"
+  }
+}
+```
+
+## Programmatic Usage
 
 ```typescript
-import { loadPlan, resumePlan } from 'riotplan';
+import { loadPlan, resumePlan } from '@riotprompt/riotplan';
 
 // Load an existing plan
 const plan = await loadPlan('./prompts/my-feature');
@@ -146,10 +301,10 @@ _No issues encountered._
 
 ## Related Packages
 
-- `riotprompt` - Prompt modeling for single interactions
-- `agentic` - Multi-turn conversation framework
-- `execution` - LLM provider interfaces
-- `riotplan-cli` - Command-line interface (coming soon)
+- `@riotprompt/riotprompt` - Prompt modeling for single interactions
+- `@riotprompt/agentic` - Multi-turn conversation framework
+- `@riotprompt/execution` - LLM provider interfaces
+- `@riotprompt/riotplan-commands-*` - Command packages (plan, status, step, feedback)
 
 ## Philosophy
 

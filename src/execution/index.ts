@@ -88,7 +88,8 @@ export class MockStepExecutor implements StepExecutor {
             return {
                 success: false,
                 step: context.step.number,
-                error: "Mock execution failed",
+                error: new Error("Mock execution failed"),
+                duration: 0,
             };
         }
 
@@ -96,6 +97,7 @@ export class MockStepExecutor implements StepExecutor {
             success: true,
             step: context.step.number,
             output: `Completed step ${context.step.number}: ${context.step.title}`,
+            duration: 0,
         };
     }
 }

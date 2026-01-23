@@ -5,6 +5,9 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "riotplan": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -39,6 +42,13 @@
     "url": "https://github.com/kjerneverk/riotplan"
   },
   "dependencies": {
+    "@riotprompt/riotplan-commands-plan": "file:../commands-plan",
+    "@riotprompt/riotplan-commands-status": "file:../commands-status",
+    "@riotprompt/riotplan-commands-step": "file:../commands-step",
+    "@riotprompt/riotplan-commands-feedback": "file:../commands-feedback",
+    "@theunwalked/cardigantime": "^0.0.22",
+    "chalk": "^5.4.1",
+    "commander": "^14.0.2",
     "js-yaml": "^4.1.1",
     "marked": "^16.0.0"
   },

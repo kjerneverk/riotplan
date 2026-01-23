@@ -4,13 +4,17 @@ import dts from "vite-plugin-dts";
 export default defineConfig({
   build: {
     lib: {
-      entry: "src/index.ts",
+      entry: {
+        index: "src/index.ts",
+        cli: "src/cli/cli.ts",
+      },
       name: "riotplan",
-      fileName: () => "index.js",
       formats: ["es"],
     },
     rollupOptions: {
       external: [
+        "commander",
+        "chalk",
         "js-yaml",
         "marked",
         "riotprompt",
@@ -22,7 +26,11 @@ export default defineConfig({
         "node:os",
         "node:http",
         "node:url",
+        "node:process",
       ],
+      output: {
+        entryFileNames: "[name].js",
+      },
     },
     sourcemap: true,
     minify: false,

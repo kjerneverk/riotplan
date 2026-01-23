@@ -119,7 +119,8 @@ describe("execution", () => {
             });
 
             expect(result.success).toBe(false);
-            expect(result.error).toContain("Mock execution failed");
+            expect(result.error).toBeInstanceOf(Error);
+            expect(result.error?.message).toContain("Mock execution failed");
         });
 
         it("should call progress callback", async () => {
