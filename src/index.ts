@@ -223,6 +223,74 @@ export {
     type GenerateRetrospectiveOptions,
 } from "./retrospective/index.js";
 
+// History Operations
+export {
+    initHistory,
+    loadHistory,
+    saveHistory,
+    type HistoryManager,
+} from "./history/manager.js";
+
+export {
+    createRevision,
+    getRevision,
+    listRevisions,
+    compareRevisions,
+    getLatestRevision,
+    nextVersion,
+    type RevisionInfo,
+    type RevisionComparison,
+} from "./history/revisions.js";
+
+export {
+    createMilestone,
+    getMilestone,
+    listMilestones,
+    rollbackToMilestone,
+    getLatestMilestone,
+    type MilestoneInfo,
+    type RollbackResult,
+} from "./history/milestones.js";
+
+// Renderer Operations
+export {
+    renderPlan,
+    renderToMarkdown,
+    renderToJson,
+    renderToHtml,
+    type RenderFormat,
+    type RenderOptions,
+    type RenderResult,
+    type MarkdownRenderOptions,
+    type JsonRenderOptions,
+    type HtmlRenderOptions,
+} from "./renderer/index.js";
+
+// Template Operations
+export {
+    listTemplates,
+    getTemplate,
+    registerTemplate,
+    listTemplatesByCategory,
+    searchTemplatesByTag,
+    type PlanTemplate,
+    type TemplateStep,
+} from "./templates/registry.js";
+
+export {
+    applyTemplate,
+    type ApplyTemplateOptions,
+    type ApplyTemplateResult,
+} from "./templates/apply.js";
+
+export {
+    BasicTemplate,
+    FeatureTemplate,
+    RefactoringTemplate,
+    MigrationTemplate,
+    SprintTemplate,
+} from "./templates/templates/index.js";
+
 // Execution Operations
 export {
     createExecutor,
@@ -253,6 +321,24 @@ export {
 } from "./cli/utils/index.js";
 
 export { createProgram } from "./cli/cli.js";
+
+// Plan Commands
+export {
+    registerPlanCommands,
+    initCommand,
+    validateCommand,
+    archiveCommand,
+    templateCommand,
+    templateListCommand,
+    templateShowCommand,
+    templateUseCommand,
+} from "./commands/plan/index.js";
+
+// Render Commands
+export {
+    registerRenderCommands,
+    renderCommand,
+} from "./commands/render/index.js";
 
 // Version
 export const VERSION = "0.0.1";

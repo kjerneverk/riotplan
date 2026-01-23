@@ -159,7 +159,7 @@ describe("execution", () => {
             const result = await executeStep(executor, plan, 99);
 
             expect(result.success).toBe(false);
-            expect(result.error).toContain("not found");
+            expect(result.error?.message).toContain("not found");
         });
 
         it("should call onComplete callback", async () => {

@@ -588,15 +588,16 @@ function parseFeedbackFile(
 
     // Parse participants
     const participants: FeedbackParticipant[] = [];
-    if (frontmatter.participants) {
+    if (Array.isArray(frontmatter.participants)) {
         for (const p of frontmatter.participants) {
             if (typeof p === "string") {
                 participants.push({ name: p, type: "human" });
-            } else if (typeof p === "object") {
+            } else if (p && typeof p === "object") {
+                const obj = p as Record<string, unknown>;
                 participants.push({
-                    name: p.name || "Unknown",
-                    type: p.type || "human",
-                    model: p.model,
+                    name: (typeof obj.name === "string" ? obj.name : undefined) || "Unknown",
+                    type: (obj.type === "human" || obj.type === "ai" ? obj.type : "human"),
+                    model: typeof obj.model === "string" ? obj.model : undefined,
                 });
             }
         }
@@ -604,7 +605,7 @@ function parseFeedbackFile(
 
     // Determine platform
     let platform: FeedbackPlatform = "other";
-    if (frontmatter.platform) {
+    if (typeof frontmatter.platform === "string") {
         const validPlatforms: FeedbackPlatform[] = [
             "cursor",
             "chatgpt",
@@ -615,25 +616,25 @@ function parseFeedbackFile(
             "document",
             "other",
         ];
-        if (validPlatforms.includes(frontmatter.platform)) {
-            platform = frontmatter.platform;
+        if (validPlatforms.includes(frontmatter.platform as FeedbackPlatform)) {
+            platform = frontmatter.platform as FeedbackPlatform;
         }
     }
 
     return {
         id,
-        title: frontmatter.title || formatCode(titleSlug),
-        createdAt: frontmatter.date ? new Date(frontmatter.date) : new Date(),
+        title: (typeof frontmatter.title === "string" ? frontmatter.title : undefined) || formatCode(titleSlug),
+        createdAt: (typeof frontmatter.date === "string" || typeof frontmatter.date === "number") ? new Date(frontmatter.date) : new Date(),
         participants:
             participants.length > 0
                 ? participants
                 : [{ name: "Unknown", type: "human" }],
         platform,
-        planVersion: frontmatter.planVersion,
+        planVersion: typeof frontmatter.planVersion === "string" ? frontmatter.planVersion : undefined,
         feedback: body.trim(),
-        resolution: frontmatter.resolution,
-        changes: frontmatter.changes,
-        openQuestions: frontmatter.openQuestions,
+        resolution: typeof frontmatter.resolution === "string" ? frontmatter.resolution : undefined,
+        changes: Array.isArray(frontmatter.changes) ? frontmatter.changes.filter((c): c is string => typeof c === "string") : undefined,
+        openQuestions: Array.isArray(frontmatter.openQuestions) ? frontmatter.openQuestions.filter((q): q is string => typeof q === "string") : undefined,
         filename,
     };
 }
@@ -723,12 +724,12 @@ function parseEvidenceFile(
     return {
         id,
         type,
-        title,
-        createdAt: frontmatter.date ? new Date(frontmatter.date) : new Date(),
-        source: frontmatter.source,
+        title: typeof title === "string" ? title : "",
+        createdAt: (typeof frontmatter.date === "string" || typeof frontmatter.date === "number") ? new Date(frontmatter.date) : new Date(),
+        source: typeof frontmatter.source === "string" ? frontmatter.source : undefined,
         filename,
-        summary: frontmatter.summary || extractFirstParagraph(body),
-        tags: frontmatter.tags,
+        summary: (typeof frontmatter.summary === "string" ? frontmatter.summary : undefined) || extractFirstParagraph(body),
+        tags: Array.isArray(frontmatter.tags) ? frontmatter.tags.filter((t): t is string => typeof t === "string") : undefined,
     };
 }
 

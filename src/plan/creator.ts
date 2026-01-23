@@ -158,7 +158,7 @@ export async function createPlan(
     }
 
     // Build subdirectories list
-    const subdirectories = [PLAN_CONVENTIONS.standardDirs.plan];
+    const subdirectories: string[] = [PLAN_CONVENTIONS.standardDirs.plan];
     if (createFeedback) {
         subdirectories.push(PLAN_CONVENTIONS.standardDirs.feedback);
     }

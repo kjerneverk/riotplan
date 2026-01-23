@@ -23,10 +23,11 @@ import { Command } from "commander";
 import chalk from "chalk";
 
 // Import command registration functions from command packages
-import { registerPlanCommands } from "@riotprompt/riotplan-commands-plan";
-import { registerStatusCommands } from "@riotprompt/riotplan-commands-status";
-import { registerStepCommands } from "@riotprompt/riotplan-commands-step";
-import { registerFeedbackCommands } from "@riotprompt/riotplan-commands-feedback";
+import { registerPlanCommands } from "../commands/plan/index.js";
+import { registerRenderCommands } from "../commands/render/index.js";
+import { registerStatusCommands } from "./commands/status.js";
+import { registerStepCommands } from "./commands/step.js";
+import { registerFeedbackCommands } from "./commands/feedback.js";
 
 const VERSION = "0.0.4";
 
@@ -47,6 +48,7 @@ export function createProgram(): Command {
 
     // Register command groups from packages
     registerPlanCommands(program);
+    registerRenderCommands(program);
     registerStatusCommands(program);
     registerStepCommands(program);
     registerFeedbackCommands(program);
@@ -59,9 +61,9 @@ export function createProgram(): Command {
 
     // Handle unknown commands
     program.on("command:*", () => {
-        // eslint-disable-next-line no-console
+         
         console.error(chalk.red(`Unknown command: ${program.args.join(" ")}`));
-        // eslint-disable-next-line no-console
+         
         console.log(`Run ${chalk.cyan("riotplan --help")} for usage.`);
         process.exit(1);
     });

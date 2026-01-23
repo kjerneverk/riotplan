@@ -148,7 +148,8 @@ export async function executeStep(
         return {
             success: false,
             step: stepNumber,
-            error: `Step ${stepNumber} not found`,
+            error: new Error(`Step ${stepNumber} not found`),
+            duration: 0,
         };
     }
 
@@ -184,7 +185,7 @@ export async function executePendingSteps(
 ): Promise<StepResult[]> {
     const results: StepResult[] = [];
     const pendingSteps =
-        plan.steps?.filter((s) => s.status === "pending" || s.status === "not_started") ??
+        plan.steps?.filter((s) => s.status === "pending") ??
         [];
 
     for (const step of pendingSteps) {
