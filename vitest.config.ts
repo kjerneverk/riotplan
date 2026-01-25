@@ -16,6 +16,7 @@ export default defineConfig({
             exclude: [
                 'node_modules/',
                 'dist/**',
+                'docs/**',
                 'vitest.config.ts',
                 'vite.config.ts',
                 'eslint.config.mjs',

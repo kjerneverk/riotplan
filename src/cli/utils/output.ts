@@ -5,7 +5,7 @@
  */
 
 import chalk from "chalk";
-import type { Plan, PlanStep, TaskStatus } from "@riotprompt/riotplan";
+import type { Plan, PlanStep, TaskStatus } from "../../types.js";
 
 /**
  * Output a success message

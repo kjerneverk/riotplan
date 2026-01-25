@@ -84,6 +84,27 @@ export {
     type ValidateOptions,
 } from "./plan/validator.js";
 
+// Prompt Storage
+export {
+    saveInitialPrompt,
+    saveElaborationPrompt,
+    saveAmendmentPrompt,
+    loadElaborationPrompts,
+    loadAmendmentPrompts,
+    type SavedPrompt,
+} from "./plan/prompts.js";
+
+// Analysis Operations
+export {
+    createAnalysisDirectory,
+    loadAnalysis,
+    hasAnalysis,
+    type Analysis,
+    type ElaborationRecord,
+    type AnalysisMetadata,
+    type CreateAnalysisOptions,
+} from "./analysis/index.js";
+
 // Feedback Operations
 export {
     createFeedback,

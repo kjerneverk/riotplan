@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "riotplan": "./dist/cli.js"
+    "riotplan": "./dist/bin.js"
   },
   "exports": {
     ".": {
@@ -43,8 +43,10 @@
   },
   "dependencies": {
     "@theunwalked/cardigantime": "^0.0.22",
+    "@types/inquirer": "^9.0.9",
     "chalk": "^5.4.1",
     "commander": "^14.0.2",
+    "inquirer": "^13.2.1",
     "js-yaml": "^4.1.1",
     "marked": "^16.0.0"
   },

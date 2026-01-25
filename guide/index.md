@@ -55,7 +55,9 @@ my-plan/
 
 This guide directory contains specialized documentation for different aspects of the system:
 
-*   [Architecture](./architecture.md): Internal design, module structure, and data flow.
+*   [Creating Plans](./create.md): How to create a plan using CLI or direct LLM creation.
+*   [Executing Plans](./execute.md): How to execute a plan using CLI or direct LLM execution.
 *   [Usage Patterns](./usage.md): Common patterns for creating and managing plans.
+*   [Architecture](./architecture.md): Internal design, module structure, and data flow.
 *   [Configuration](./configuration.md): Configuration options and file conventions.
 *   [Development](./development.md): Guide for contributing to `riotplan`.

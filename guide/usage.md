@@ -23,7 +23,103 @@ my-feature/
 
 ## CLI Usage
 
-### Creating a New Plan
+### Interactive Plan Creation (Recommended)
+
+For guided plan creation, use the `create` command:
+
+```bash
+# Start interactive creation
+riotplan create my-feature
+
+# Skip analysis, generate directly
+riotplan create my-feature --direct
+
+# Force analysis phase
+riotplan create my-feature --analyze
+
+# Specify number of steps
+riotplan create my-feature --direct --steps 3
+```
+
+#### The Create Flow
+
+The `create` command guides you through plan creation:
+
+1. **Name & Description**: Provide a name and describe what you want to accomplish
+2. **Mode Selection**: Choose analysis-first or direct generation
+3. **Elaboration** (if analysis mode): Refine requirements iteratively
+4. **Generation**: Create plan files from analysis or prompt
+5. **Next Steps**: Get guidance on what to do next
+
+#### Analysis Mode
+
+Analysis mode is recommended for complex plans:
+
+```bash
+riotplan create complex-feature --analyze
+```
+
+This creates an `analysis/` directory with:
+- `REQUIREMENTS.md` - Elaborated requirements
+- `prompts/` - Saved elaboration feedback
+
+Use `riotplan elaborate` to add feedback:
+
+```bash
+riotplan elaborate ./complex-feature
+riotplan elaborate ./complex-feature -m "Quick feedback"
+```
+
+When ready, mark analysis complete and generate:
+
+```bash
+riotplan analysis ready ./complex-feature
+riotplan generate ./complex-feature
+```
+
+#### Direct Mode
+
+For straightforward plans, skip analysis:
+
+```bash
+riotplan create simple-fix --direct
+```
+
+This generates the plan immediately from your description.
+
+#### Amending Plans
+
+After generation, use `amend` for structural feedback:
+
+```bash
+riotplan amend ./my-feature
+riotplan amend ./my-feature -m "Step 03 should come before 02"
+riotplan amend ./my-feature -s 02 -m "Add more detail"
+```
+
+Amendments are saved to `amendments/` for reference.
+
+#### Create vs Init
+
+| Command | Use Case |
+|---------|----------|
+| `riotplan create` | Guided, interactive creation with analysis |
+| `riotplan init` | Quick scaffolding for programmatic use |
+
+#### Prompt Preservation
+
+All inputs are saved for recovery:
+- Initial prompt → `<name>-prompt.md`
+- Elaborations → `analysis/prompts/XXX-feedback.md`
+- Amendments → `amendments/XXX-feedback.md`
+
+If interrupted, you can resume where you left off.
+
+---
+
+### Quick Plan Scaffolding
+
+For programmatic or quick scaffolding, use `init`:
 
 ```bash
 # Create a basic plan

@@ -28,6 +28,11 @@ import { registerRenderCommands } from "../commands/render/index.js";
 import { registerStatusCommands } from "./commands/status.js";
 import { registerStepCommands } from "./commands/step.js";
 import { registerFeedbackCommands } from "./commands/feedback.js";
+import { registerCreateCommand } from "./commands/create.js";
+import { registerElaborateCommand } from "./commands/elaborate.js";
+import { registerAnalysisCommands } from "./commands/analysis.js";
+import { registerGenerateCommand } from "./commands/generate.js";
+import { registerAmendCommand, registerAmendmentsCommands } from "./commands/amend.js";
 
 const VERSION = "0.0.4";
 
@@ -52,6 +57,12 @@ export function createProgram(): Command {
     registerStatusCommands(program);
     registerStepCommands(program);
     registerFeedbackCommands(program);
+    registerCreateCommand(program);
+    registerElaborateCommand(program);
+    registerAnalysisCommands(program);
+    registerGenerateCommand(program);
+    registerAmendCommand(program);
+    registerAmendmentsCommands(program);
 
     // Global options
     program
@@ -69,10 +80,4 @@ export function createProgram(): Command {
     });
 
     return program;
-}
-
-// Main execution - only run when executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-    const program = createProgram();
-    program.parse();
 }
