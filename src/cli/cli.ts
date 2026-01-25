@@ -33,6 +33,7 @@ import { registerElaborateCommand } from "./commands/elaborate.js";
 import { registerAnalysisCommands } from "./commands/analysis.js";
 import { registerGenerateCommand } from "./commands/generate.js";
 import { registerAmendCommand, registerAmendmentsCommands } from "./commands/amend.js";
+import { registerVerifyCommand } from "./commands/verify.js";
 
 const VERSION = "0.0.4";
 
@@ -63,6 +64,7 @@ export function createProgram(): Command {
     registerGenerateCommand(program);
     registerAmendCommand(program);
     registerAmendmentsCommands(program);
+    registerVerifyCommand(program);
 
     // Global options
     program

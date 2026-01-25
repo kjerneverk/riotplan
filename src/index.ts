@@ -361,6 +361,43 @@ export {
     renderCommand,
 } from "./commands/render/index.js";
 
+// Verification Types and Constants
+export type {
+    CriteriaPriority,
+    CriteriaStatus,
+    VerificationCriterion,
+    CriterionResult,
+    CoverageReport,
+    StepCompletionStatus,
+    AcceptanceCriterion,
+    StepCompletionResult,
+    CompletionReport,
+    VerificationReport,
+} from "./verification/index.js";
+
+export {
+    PRIORITY_WEIGHTS,
+    CRITERIA_PATTERNS,
+    HEALTH_THRESHOLDS,
+} from "./verification/index.js";
+
+// Verification Criteria Parser
+export type { ParsedCriteria } from "./verification/index.js";
+
+export {
+    parseCriteria,
+    parseCriteriaFromContent,
+    getCriteriaSummary,
+} from "./verification/index.js";
+
+// Verification Coverage Checker
+export type { CoverageOptions } from "./verification/index.js";
+
+export { checkCoverage } from "./verification/index.js";
+
+// Verification Completion Checker
+export { checkCompletion } from "./verification/index.js";
+
 // Version
 export const VERSION = "0.0.1";
 
