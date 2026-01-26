@@ -21,6 +21,9 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
 // Import command registration functions from command packages
 import { registerPlanCommands } from "../commands/plan/index.js";
@@ -35,7 +38,21 @@ import { registerGenerateCommand } from "./commands/generate.js";
 import { registerAmendCommand, registerAmendmentsCommands } from "./commands/amend.js";
 import { registerVerifyCommand } from "./commands/verify.js";
 
-const VERSION = "0.0.4";
+// Read version from package.json
+// In development: src/cli/cli.ts -> ../../package.json
+// In production: dist/cli-*.js -> ../package.json
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+let packageJsonPath = join(__dirname, "../package.json");
+try {
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+    var VERSION = packageJson.version;
+} catch {
+    // Fallback if path is wrong
+    packageJsonPath = join(__dirname, "../../package.json");
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+    var VERSION = packageJson.version;
+}
 
 /**
  * Create the CLI program with all commands
