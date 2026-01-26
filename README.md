@@ -62,32 +62,73 @@ Or as a development dependency:
 npm install --save-dev @riotprompt/riotplan
 ```
 
+### AI-Powered Generation (Optional)
+
+`riotplan` can use AI to generate detailed, actionable plans from your descriptions. Install an execution provider:
+
+```bash
+# For Anthropic Claude (recommended)
+npm install @riotprompt/execution-anthropic
+
+# For OpenAI GPT
+npm install @riotprompt/execution-openai
+
+# For Google Gemini
+npm install @riotprompt/execution-gemini
+```
+
+Set your API key:
+
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."
+export OPENAI_API_KEY="sk-..."
+export GOOGLE_API_KEY="..."
+```
+
+Without an AI provider, `riotplan` falls back to template-based generation.
+
 ## Command-Line Interface
 
 ### Creating a Plan
 
-Create a new plan:
+Create a new plan with AI generation:
 
 ```bash
-riotplan plan init my-feature
-riotplan plan init my-feature --description "Implement the cool feature"
-riotplan plan init my-feature --template detailed --steps 5
+riotplan create my-feature
+```
+
+This will:
+1. Prompt for your plan description (opens editor)
+2. Ask if you want analysis first or direct generation
+3. Use AI to generate detailed plan content
+4. Create all plan files with actionable steps
+
+Options:
+
+```bash
+riotplan create my-feature --direct           # Skip analysis, generate directly
+riotplan create my-feature --steps 7          # Specify number of steps
+riotplan create my-feature --provider anthropic  # Choose AI provider
+riotplan create my-feature --model claude-sonnet-4-5  # Specify model
+riotplan create my-feature --no-ai            # Use templates only
 ```
 
 Creates:
 
 ```
 my-feature/
-├── my-feature-prompt.md     # Meta-prompt (prompt-of-prompts)
-├── SUMMARY.md               # Overview of the approach
+├── my-feature-prompt.md     # Your original description
+├── SUMMARY.md               # AI-generated overview and approach
 ├── EXECUTION_PLAN.md        # Step-by-step strategy
-├── STATUS.md                # Current state
+├── STATUS.md                # Current state tracking
 └── plan/
-    ├── 01-analysis.md
-    ├── 02-design.md
-    ├── 03-implementation.md
+    ├── 01-analysis.md       # Detailed step with specific tasks
+    ├── 02-design.md         # Concrete acceptance criteria
+    ├── 03-implementation.md # Testing strategies
     └── ...
 ```
+
+**AI vs Templates**: With AI, you get specific, actionable content tailored to your project. Without AI, you get template files with placeholders to fill in manually.
 
 ### Checking Status
 
@@ -195,13 +236,22 @@ riotplan plan archive ./my-plan # Specific path
 | ⏸️ | Blocked |
 | ⏭️ | Skipped |
 
+### Generate from Existing Prompt
+
+If you already have a plan directory with a prompt file:
+
+```bash
+riotplan generate ./my-plan --steps 5
+riotplan generate ./my-plan --provider anthropic --model claude-sonnet-4-5
+```
+
 ### Configuration
 
 Create `.riotplanrc.json` in your plan directory:
 
 ```json
 {
-  "defaultProvider": "openai",
+  "defaultProvider": "anthropic",
   "autoUpdateStatus": true,
   "stepTemplate": "detailed",
   "analysis": {

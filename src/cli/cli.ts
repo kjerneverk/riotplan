@@ -44,14 +44,15 @@ import { registerVerifyCommand } from "./commands/verify.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 let packageJsonPath = join(__dirname, "../package.json");
+let VERSION: string;
 try {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-    var VERSION = packageJson.version;
+    VERSION = packageJson.version;
 } catch {
     // Fallback if path is wrong
     packageJsonPath = join(__dirname, "../../package.json");
     const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-    var VERSION = packageJson.version;
+    VERSION = packageJson.version;
 }
 
 /**

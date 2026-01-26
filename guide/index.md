@@ -56,6 +56,7 @@ my-plan/
 This guide directory contains specialized documentation for different aspects of the system:
 
 *   [Creating Plans](./create.md): How to create a plan using CLI or direct LLM creation.
+*   [AI Generation](./ai-generation.md): Using AI to generate detailed, actionable plans.
 *   [Executing Plans](./execute.md): How to execute a plan using CLI or direct LLM execution.
 *   [Usage Patterns](./usage.md): Common patterns for creating and managing plans.
 *   [Architecture](./architecture.md): Internal design, module structure, and data flow.

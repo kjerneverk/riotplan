@@ -5,11 +5,24 @@ import { join } from "node:path";
 import { stat, readFile, writeFile, mkdir } from "node:fs/promises";
 import { saveInitialPrompt, saveElaborationPrompt } from "../../plan/prompts.js";
 import { createAnalysisDirectory } from "../../analysis/index.js";
+import { 
+    generatePlan, 
+    formatSummary, 
+    formatStep,
+    loadProvider,
+    getDefaultProvider,
+    getProviderApiKey,
+    detectAvailableProviders,
+    type GenerationContext,
+} from "../../ai/index.js";
 
 export interface CreateOptions {
     direct?: boolean;
     analyze?: boolean;
     path?: string;
+    provider?: string;
+    model?: string;
+    noAi?: boolean;
 }
 
 /**
@@ -51,21 +64,26 @@ async function promptForDescription(): Promise<string> {
  * Ask user whether to analyze first or generate directly
  */
 async function promptForMode(): Promise<"analyze" | "direct"> {
+    console.log(chalk.cyan("\nHow would you like to proceed?"));
+    console.log(chalk.gray("  1) Create an analysis first (recommended for complex plans)"));
+    console.log(chalk.gray("  2) Generate the plan directly"));
+    
     const { mode } = await inquirer.prompt([
         {
             type: "list",
             name: "mode",
-            message: "How would you like to proceed?",
+            message: "Select mode:",
             choices: [
                 {
-                    name: "Create an analysis first (recommended for complex plans)",
+                    name: "1) Create an analysis first",
                     value: "analyze",
                 },
                 {
-                    name: "Generate the plan directly",
+                    name: "2) Generate the plan directly",
                     value: "direct",
                 },
             ],
+            default: "direct",
         },
     ]);
     return mode;
@@ -109,17 +127,104 @@ async function planExists(planPath: string): Promise<boolean> {
 }
 
 /**
- * Generate plan files directly
+ * Generate plan files with AI
  */
-async function generatePlanDirect(
+async function generatePlanWithAI(
+    planPath: string,
+    planName: string,
+    description: string,
+    elaborations: string[],
+    stepCount: number,
+    options: CreateOptions
+): Promise<void> {
+    // Create plan directory
+    await mkdir(join(planPath, "plan"), { recursive: true });
+    
+    const title = planName.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    const today = new Date().toISOString().split("T")[0];
+    
+    try {
+        // Detect available providers
+        const available = await detectAvailableProviders();
+        
+        if (available.length === 0) {
+            console.log(chalk.yellow("\n⚠️  No AI providers installed. Falling back to template generation."));
+            console.log(chalk.gray("Install a provider with: npm install @riotprompt/execution-anthropic"));
+            await generatePlanTemplate(planPath, planName, description, stepCount);
+            return;
+        }
+        
+        // Determine which provider to use
+        const providerName = options.provider || getDefaultProvider();
+        
+        if (!providerName) {
+            console.log(chalk.yellow("\n⚠️  No API key found in environment."));
+            console.log(chalk.gray("Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or GOOGLE_API_KEY"));
+            await generatePlanTemplate(planPath, planName, description, stepCount);
+            return;
+        }
+        
+        console.log(chalk.cyan(`\n🤖 Generating plan with ${providerName}...`));
+        
+        // Load provider
+        const provider = await loadProvider({
+            name: providerName,
+            apiKey: getProviderApiKey(providerName),
+            model: options.model,
+        });
+        
+        // Generate plan with AI
+        const context: GenerationContext = {
+            planName,
+            description,
+            elaborations,
+            stepCount,
+        };
+        
+        const generatedPlan = await generatePlan(context, provider, {
+            model: options.model,
+            apiKey: getProviderApiKey(providerName),
+        });
+        
+        // Write SUMMARY.md
+        const summaryContent = formatSummary(generatedPlan, planName);
+        await writeFile(join(planPath, "SUMMARY.md"), summaryContent, "utf-8");
+        console.log(chalk.gray("  Created: SUMMARY.md"));
+        
+        // Write EXECUTION_PLAN.md
+        const execContent = generateExecutionPlan(planPath, title, generatedPlan.steps);
+        await writeFile(join(planPath, "EXECUTION_PLAN.md"), execContent, "utf-8");
+        console.log(chalk.gray("  Created: EXECUTION_PLAN.md"));
+        
+        // Write STATUS.md
+        const statusContent = generateStatus(title, generatedPlan.steps, today);
+        await writeFile(join(planPath, "STATUS.md"), statusContent, "utf-8");
+        console.log(chalk.gray("  Created: STATUS.md"));
+        
+        // Write step files
+        for (const step of generatedPlan.steps) {
+            const num = String(step.number).padStart(2, "0");
+            const stepContent = formatStep(step);
+            await writeFile(join(planPath, "plan", `${num}-step.md`), stepContent, "utf-8");
+            console.log(chalk.gray(`  Created: plan/${num}-step.md`));
+        }
+        
+    } catch (error) {
+        console.error(chalk.red("\n❌ AI generation failed:"), error instanceof Error ? error.message : error);
+        console.log(chalk.yellow("Falling back to template generation..."));
+        await generatePlanTemplate(planPath, planName, description, stepCount);
+    }
+}
+
+/**
+ * Generate plan files from templates (fallback)
+ */
+async function generatePlanTemplate(
     planPath: string,
     planName: string,
     description: string,
     stepCount: number = 5
 ): Promise<void> {
-    // Create plan directory
-    await mkdir(join(planPath, "plan"), { recursive: true });
-    
     const title = planName.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
     const today = new Date().toISOString().split("T")[0];
     
@@ -250,6 +355,70 @@ _Additional notes..._
     }
 }
 
+function generateExecutionPlan(planPath: string, title: string, steps: any[]): string {
+    const stepRows = steps.map((step) => {
+        const num = String(step.number).padStart(2, "0");
+        return `| ${step.number} | ${step.title} | \`plan/${num}-step.md\` | - |`;
+    }).join("\n");
+    
+    return `# ${title} - Execution Plan
+
+> Execute: "${planPath}/EXECUTION_PLAN.md"
+
+## Execution Sequence
+
+| Order | Step | File | Est. Time |
+|-------|------|------|-----------|
+${stepRows}
+
+## How to Execute
+
+1. Read STATUS.md for current state
+2. Find next pending step
+3. Execute step file
+4. Update STATUS.md
+5. Continue until complete
+`;
+}
+
+function generateStatus(title: string, steps: any[], today: string): string {
+    const stepRows = steps.map(step => {
+        const num = String(step.number).padStart(2, "0");
+        return `| ${num} | ${step.title} | ⬜ Pending | - | - | - |`;
+    }).join("\n");
+    
+    return `# ${title} - Execution Status
+
+## Current State
+
+| Field | Value |
+|-------|-------|
+| **Status** | \`pending\` |
+| **Current Step** | - |
+| **Last Completed** | - |
+| **Started At** | - |
+| **Last Updated** | ${today} |
+
+## Step Progress
+
+| Step | Name | Status | Started | Completed | Notes |
+|------|------|--------|---------|-----------|-------|
+${stepRows}
+
+## Blockers
+
+_No blockers currently._
+
+## Issues
+
+_No issues currently._
+
+## Notes
+
+_Plan generated. Ready for review and execution._
+`;
+}
+
 /**
  * Register the create command
  */
@@ -261,6 +430,9 @@ export function registerCreateCommand(program: Command): void {
         .option("-a, --analyze", "Force analysis phase")
         .option("-p, --path <path>", "Output directory (default: current)")
         .option("-s, --steps <number>", "Number of steps to generate", "5")
+        .option("--provider <name>", "AI provider (anthropic, openai, gemini)")
+        .option("--model <name>", "Model to use for generation")
+        .option("--no-ai", "Skip AI generation, use templates only")
         .action(async (name: string | undefined, options: CreateOptions & { steps?: string }) => {
             try {
                 // Get name if not provided
@@ -339,8 +511,9 @@ export function registerCreateCommand(program: Command): void {
                     
                     if (generateNow) {
                         await markAnalysisReady(planPath);
-                        console.log(chalk.cyan("\nGenerating plan..."));
-                        await generatePlanDirect(planPath, planName, description, stepCount);
+                        const elaborations: string[] = [];
+                        // TODO: Load elaborations from analysis
+                        await generatePlanWithAI(planPath, planName, description, elaborations, stepCount, options);
                         console.log(chalk.green("\n✅ Plan generated!"));
                     } else {
                         console.log(chalk.cyan("\nWhen ready:"));
@@ -349,8 +522,12 @@ export function registerCreateCommand(program: Command): void {
                     }
                 } else {
                     // Direct mode - generate immediately
-                    console.log(chalk.cyan("\nGenerating plan..."));
-                    await generatePlanDirect(planPath, planName, description, stepCount);
+                    if (options.noAi) {
+                        console.log(chalk.cyan("\nGenerating plan from templates..."));
+                        await generatePlanTemplate(planPath, planName, description, stepCount);
+                    } else {
+                        await generatePlanWithAI(planPath, planName, description, [], stepCount, options);
+                    }
                     console.log(chalk.green("\n✅ Plan generated!"));
                 }
                 

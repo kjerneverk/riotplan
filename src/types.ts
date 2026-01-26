@@ -13,6 +13,69 @@
  * - Optional analysis directory
  */
 
+// ===== LLM PROVIDER TYPES =====
+
+/**
+ * Message in a conversation
+ */
+export interface Message {
+    role: 'user' | 'assistant' | 'system' | 'developer' | 'tool';
+    content: string | string[] | null;
+    name?: string;
+}
+
+/**
+ * LLM request interface
+ */
+export interface Request {
+    messages: Message[];
+    model: string;
+    responseFormat?: any;
+    validator?: any;
+    addMessage(message: Message): void;
+}
+
+/**
+ * Response from an LLM provider
+ */
+export interface ProviderResponse {
+    content: string;
+    model: string;
+    usage?: {
+        inputTokens: number;
+        outputTokens: number;
+    };
+    toolCalls?: Array<{
+        id: string;
+        type: 'function';
+        function: {
+            name: string;
+            arguments: string;
+        };
+    }>;
+}
+
+/**
+ * Options for execution
+ */
+export interface ExecutionOptions {
+    apiKey?: string;
+    model?: string;
+    temperature?: number;
+    maxTokens?: number;
+    timeout?: number;
+    retries?: number;
+}
+
+/**
+ * Provider interface for LLM execution
+ */
+export interface Provider {
+    readonly name: string;
+    execute(request: Request, options?: ExecutionOptions): Promise<ProviderResponse>;
+    supportsModel?(model: string): boolean;
+}
+
 // ===== TASK STATUS =====
 
 /**
