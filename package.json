@@ -1,10 +1,13 @@
 {
   "name": "@riotprompt/riotplan",
-  "version": "0.0.4",
+  "version": "1.0.1-dev.0",
   "description": "Framework for long-lived, stateful AI workflows (plans)",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "riotplan": "./dist/bin.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -20,7 +23,7 @@
     "test": "vitest run --coverage",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src",
-    "precommit": "npm run lint && npm run test",
+    "precommit": "npm run build && npm run lint && npm run test",
     "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
@@ -39,13 +42,18 @@
     "url": "https://github.com/kjerneverk/riotplan"
   },
   "dependencies": {
+    "@theunwalked/cardigantime": "^0.0.22",
+    "@types/inquirer": "^9.0.9",
+    "chalk": "^5.4.1",
+    "commander": "^14.0.2",
+    "inquirer": "^13.2.1",
     "js-yaml": "^4.1.1",
     "marked": "^16.0.0"
   },
   "peerDependencies": {
-    "@riotprompt/agentic": "^0.0.5",
-    "@riotprompt/execution": "^0.0.4",
-    "@riotprompt/riotprompt": "^0.0.21"
+    "@riotprompt/agentic": "^1.0.2",
+    "@riotprompt/execution": "^1.0.1",
+    "@riotprompt/riotprompt": "^1.0.1"
   },
   "peerDependenciesMeta": {
     "@riotprompt/agentic": {
@@ -66,6 +74,7 @@
     "@typescript-eslint/eslint-plugin": "^8.34.0",
     "@typescript-eslint/parser": "^8.34.0",
     "@vitest/coverage-v8": "^3.2.4",
+    "ajv": "^8.17.1",
     "eslint": "^9.28.0",
     "eslint-plugin-import": "^2.31.0",
     "globals": "^16.2.0",

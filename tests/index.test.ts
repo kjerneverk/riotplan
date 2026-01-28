@@ -1,15 +1,11 @@
 /**
- * Tests for RiotPlan stub functions
+ * Tests for RiotPlan exports and stub functions
  */
 
 import { describe, it, expect } from 'vitest';
 import {
   VERSION,
   PLAN_CONVENTIONS,
-  loadPlan,
-  createPlan,
-  parseStatus,
-  generateStatus,
   executeStep,
   resumePlan,
   updatePlanState,
@@ -29,42 +25,6 @@ describe('PLAN_CONVENTIONS export', () => {
 });
 
 describe('Stub functions', () => {
-  describe('loadPlan', () => {
-    it('should throw not implemented error', async () => {
-      await expect(loadPlan('./some/path')).rejects.toThrow(
-        'riotplan.loadPlan is not yet implemented'
-      );
-    });
-  });
-
-  describe('createPlan', () => {
-    it('should throw not implemented error', async () => {
-      await expect(
-        createPlan({
-          code: 'test',
-          name: 'Test Plan',
-          path: './test',
-        })
-      ).rejects.toThrow('riotplan.createPlan is not yet implemented');
-    });
-  });
-
-  describe('parseStatus', () => {
-    it('should throw not implemented error', () => {
-      expect(() => parseStatus('# Status')).toThrow(
-        'riotplan.parseStatus is not yet implemented'
-      );
-    });
-  });
-
-  describe('generateStatus', () => {
-    it('should throw not implemented error', () => {
-      expect(() => generateStatus({})).toThrow(
-        'riotplan.generateStatus is not yet implemented'
-      );
-    });
-  });
-
   describe('executeStep', () => {
     it('should throw not implemented error', async () => {
       await expect(executeStep({}, 1)).rejects.toThrow(

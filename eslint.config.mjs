@@ -75,4 +75,11 @@ export default defineConfig([
                 ]
             }]
         },
+    },
+    // Allow console in CLI files
+    {
+        files: ["src/cli/**/*.ts"],
+        rules: {
+            "no-console": "off",
+        },
     }]);
