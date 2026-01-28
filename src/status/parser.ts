@@ -279,13 +279,38 @@ function parseStepProgress(content: string): StatusDocument["stepProgress"] {
     const steps: StatusDocument["stepProgress"] = [];
 
     // Find the step progress table - look for table header with Step and Name columns
-    const tableMatch = content.match(
-        /\|\s*Step\s*\|\s*Name\s*\|[^\n]*\n\|[-\s|]+\n([\s\S]*?)(?=\n\n|\n##|$)/i
-    );
+    // Use line-by-line parsing to avoid polynomial regex
+    const lines = content.split('\n');
+    let inTable = false;
+    let headerFound = false;
+    const tableRows: string[] = [];
+    
+    for (const line of lines) {
+        // Look for table header
+        if (!headerFound && /\|\s*Step\s*\|\s*Name\s*\|/i.test(line)) {
+            headerFound = true;
+            continue;
+        }
+        
+        // Skip separator row
+        if (headerFound && !inTable && /^\|[-\s|]+\|$/.test(line)) {
+            inTable = true;
+            continue;
+        }
+        
+        // Collect table rows
+        if (inTable) {
+            // Stop at empty line or new section
+            if (!line.trim() || /^##/.test(line)) {
+                break;
+            }
+            if (line.includes('|')) {
+                tableRows.push(line);
+            }
+        }
+    }
 
-    if (!tableMatch) return steps;
-
-    const tableRows = tableMatch[1].split("\n").filter((row) => row.trim());
+    if (tableRows.length === 0) return steps;
 
     for (const row of tableRows) {
         // Skip separator rows
@@ -407,12 +432,30 @@ function parseNotes(content: string): string | undefined {
  * Extract a section from markdown content
  */
 function extractSection(content: string, name: string): string | undefined {
-    const regex = new RegExp(
-        `##\\s*${name}[^\\n]*\\n([\\s\\S]*?)(?=\\n##|\\n---|$)`,
-        "i"
-    );
-    const match = content.match(regex);
-    return match ? match[1].trim() : undefined;
+    // Use line-by-line parsing to avoid polynomial regex
+    const lines = content.split('\n');
+    const sectionLines: string[] = [];
+    let inSection = false;
+    
+    for (const line of lines) {
+        // Check if we're entering the target section
+        if (new RegExp(`^##\\s*${name}`, 'i').test(line)) {
+            inSection = true;
+            continue;
+        }
+        
+        // Check if we're entering a new section or separator
+        if (inSection && (/^##/.test(line) || /^---/.test(line))) {
+            break;
+        }
+        
+        // Collect lines in the section
+        if (inSection) {
+            sectionLines.push(line);
+        }
+    }
+    
+    return sectionLines.length > 0 ? sectionLines.join('\n').trim() : undefined;
 }
 
 // ===== UTILITIES =====

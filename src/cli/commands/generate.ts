@@ -44,8 +44,11 @@ async function loadInitialPrompt(planPath: string, planName: string): Promise<st
         const promptPath = join(planPath, `${planName}-prompt.md`);
         const content = await readFile(promptPath, "utf-8");
         // Extract just the prompt content (after the --- separator)
-        const match = content.match(/---\n\n([\s\S]+)$/);
-        return match ? match[1].trim() : content;
+        const separatorIndex = content.indexOf('---\n\n');
+        if (separatorIndex !== -1) {
+            return content.substring(separatorIndex + 5).trim();
+        }
+        return content;
     } catch {
         return null;
     }

@@ -288,11 +288,26 @@ export function generateStatus(
     // Extract existing notes if preserving
     let existingNotes: string | undefined;
     if (preserveNotes && existingContent) {
-        const notesMatch = existingContent.match(
-            /## Notes\s*\n([\s\S]*?)(?=\n---|\n##|$)/
-        );
-        if (notesMatch) {
-            existingNotes = notesMatch[1].trim();
+        // Use line-by-line parsing to avoid polynomial regex
+        const lines = existingContent.split('\n');
+        const noteLines: string[] = [];
+        let inNotes = false;
+        
+        for (const line of lines) {
+            if (/^## Notes$/i.test(line)) {
+                inNotes = true;
+                continue;
+            }
+            if (inNotes && (/^##/.test(line) || /^---/.test(line))) {
+                break;
+            }
+            if (inNotes) {
+                noteLines.push(line);
+            }
+        }
+        
+        if (noteLines.length > 0) {
+            existingNotes = noteLines.join('\n').trim();
         }
     }
 

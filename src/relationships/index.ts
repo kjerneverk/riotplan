@@ -104,9 +104,16 @@ export function parseRelationshipsFromContent(content: string): ParsedRelationsh
     const relationships: ParsedRelationship[] = [];
 
     // Parse frontmatter relationships
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-    if (frontmatterMatch) {
-        const frontmatter = frontmatterMatch[1];
+    // Use indexOf to avoid polynomial regex
+    let frontmatter: string | null = null;
+    if (content.startsWith('---\n')) {
+        const endMarker = content.indexOf('\n---', 4);
+        if (endMarker !== -1) {
+            frontmatter = content.substring(4, endMarker);
+        }
+    }
+    
+    if (frontmatter) {
 
         // spawned-from: path
         const spawnedFrom = frontmatter.match(/spawned-from:\s*(.+)/);
@@ -155,11 +162,26 @@ export function parseRelationshipsFromContent(content: string): ParsedRelationsh
     }
 
     // Parse ## Related Plans section
-    const sectionMatch = content.match(
-        /##\s+Related\s+Plans?\s*\n([\s\S]*?)(?=\n##|\n#\s|$)/i
-    );
-    if (sectionMatch) {
-        const section = sectionMatch[1];
+    // Use line-by-line parsing to avoid polynomial regex
+    const lines = content.split('\n');
+    const sectionLines: string[] = [];
+    let inSection = false;
+    
+    for (const line of lines) {
+        if (/^##\s+Related\s+Plans?$/i.test(line)) {
+            inSection = true;
+            continue;
+        }
+        if (inSection && /^#/.test(line)) {
+            break;
+        }
+        if (inSection) {
+            sectionLines.push(line);
+        }
+    }
+    
+    if (sectionLines.length > 0) {
+        const section = sectionLines.join('\n');
         const lines = section.split("\n");
 
         for (const line of lines) {
@@ -636,7 +658,32 @@ export async function updatePlanRelationships(plan: Plan): Promise<void> {
     }
 
     // Remove existing Related Plans section
-    content = content.replace(/\n##\s+Related\s+Plans?\s*\n[\s\S]*?(?=\n##|\n#\s|$)/i, "");
+    // Split by headings to avoid polynomial regex
+    const lines = content.split('\n');
+    const filtered: string[] = [];
+    let inRelatedSection = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        
+        // Check if we're entering the Related Plans section
+        if (/^##\s+Related\s+Plans?$/i.test(line)) {
+            inRelatedSection = true;
+            continue;
+        }
+        
+        // Check if we're entering a new section (exit Related Plans)
+        if (inRelatedSection && /^#/.test(line)) {
+            inRelatedSection = false;
+        }
+        
+        // Keep lines that aren't in the Related Plans section
+        if (!inRelatedSection) {
+            filtered.push(line);
+        }
+    }
+    
+    content = filtered.join('\n');
 
     // Add new section
     const relSection = generateRelationshipsMarkdown(plan);

@@ -461,11 +461,29 @@ function extractSection(
     content: string,
     sectionName: string
 ): string | undefined {
-    const regex = new RegExp(
-        `##\\s+${sectionName}\\s*\\n([\\s\\S]*?)(?=\\n##|$)`,
-        "i"
-    );
-    const match = content.match(regex);
-    return match ? match[1].trim() : undefined;
+    // Use line-by-line parsing to avoid polynomial regex
+    const lines = content.split('\n');
+    const sectionLines: string[] = [];
+    let inSection = false;
+    
+    for (const line of lines) {
+        // Check if we're entering the target section
+        if (new RegExp(`^##\\s+${sectionName}`, 'i').test(line)) {
+            inSection = true;
+            continue;
+        }
+        
+        // Check if we're entering a new section
+        if (inSection && /^##/.test(line)) {
+            break;
+        }
+        
+        // Collect lines in the section
+        if (inSection) {
+            sectionLines.push(line);
+        }
+    }
+    
+    return sectionLines.length > 0 ? sectionLines.join('\n').trim() : undefined;
 }
 
