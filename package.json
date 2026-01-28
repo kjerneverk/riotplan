@@ -51,9 +51,9 @@
     "marked": "^16.0.0"
   },
   "peerDependencies": {
-    "@riotprompt/agentic": "^1.0.0",
-    "@riotprompt/execution": "^1.0.0",
-    "@riotprompt/riotprompt": "^1.0.0"
+    "@riotprompt/agentic": "^1.0.2",
+    "@riotprompt/execution": "^1.0.1",
+    "@riotprompt/riotprompt": "^1.0.1"
   },
   "peerDependenciesMeta": {
     "@riotprompt/agentic": {
