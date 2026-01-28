@@ -143,6 +143,97 @@ describe("retrospective", () => {
                 true
             );
         });
+
+        it("should note 100% completion rate", () => {
+            const plan = createMockPlan({
+                steps: [
+                    {
+                        number: 1,
+                        code: "step1",
+                        filename: "01-step1.md",
+                        title: "Step 1",
+                        status: "completed",
+                        filePath: "/test/plan/01-step1.md",
+                    },
+                    {
+                        number: 2,
+                        code: "step2",
+                        filename: "02-step2.md",
+                        title: "Step 2",
+                        status: "completed",
+                        filePath: "/test/plan/02-step2.md",
+                    },
+                ],
+            });
+
+            const retro = generateRetrospective(plan);
+
+            expect(retro.whatWentWell.some((w) => w.includes("All steps completed"))).toBe(true);
+        });
+
+        it("should note high completion rate (90-99%)", () => {
+            const steps = Array.from({ length: 10 }, (_, i) => ({
+                number: i + 1,
+                code: `step${i + 1}`,
+                filename: `${String(i + 1).padStart(2, '0')}-step${i + 1}.md`,
+                title: `Step ${i + 1}`,
+                status: i < 9 ? "completed" : "pending",
+                filePath: `/test/plan/${String(i + 1).padStart(2, '0')}-step${i + 1}.md`,
+            }));
+
+            const plan = createMockPlan({ steps });
+            const retro = generateRetrospective(plan);
+
+            expect(retro.whatWentWell.some((w) => w.includes("High completion rate"))).toBe(true);
+        });
+
+        it("should note blockers in what could improve", () => {
+            const plan = createMockPlan({
+                state: {
+                    status: "completed",
+                    progress: 100,
+                    startedAt: new Date("2026-01-14T09:00:00Z"),
+                    completedAt: new Date("2026-01-14T17:00:00Z"),
+                    lastUpdatedAt: new Date("2026-01-14"),
+                    blockers: [
+                        {
+                            description: "API rate limit",
+                            stepNumber: 2,
+                            createdAt: new Date(),
+                        },
+                    ],
+                    issues: [],
+                },
+            });
+
+            const retro = generateRetrospective(plan);
+
+            expect(retro.whatCouldImprove.some((w) => w.includes("blockers"))).toBe(true);
+        });
+
+        it("should note issues in what could improve", () => {
+            const plan = createMockPlan({
+                state: {
+                    status: "completed",
+                    progress: 100,
+                    startedAt: new Date("2026-01-14T09:00:00Z"),
+                    completedAt: new Date("2026-01-14T17:00:00Z"),
+                    lastUpdatedAt: new Date("2026-01-14"),
+                    blockers: [],
+                    issues: [
+                        {
+                            description: "Test failure",
+                            severity: "high",
+                            createdAt: new Date(),
+                        },
+                    ],
+                },
+            });
+
+            const retro = generateRetrospective(plan);
+
+            expect(retro.whatCouldImprove.some((w) => w.includes("issues"))).toBe(true);
+        });
     });
 
     describe("generateRetrospectiveMarkdown", () => {

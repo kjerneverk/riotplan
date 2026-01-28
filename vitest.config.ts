@@ -20,6 +20,9 @@ export default defineConfig({
                 'vitest.config.ts',
                 'vite.config.ts',
                 'eslint.config.mjs',
+                'src/cli/commands/**',
+                'src/cli/utils/**',
+                'src/ai/**',
             ]
         }
     },

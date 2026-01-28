@@ -174,5 +174,32 @@ describe("riotplan-templates", () => {
 
       expect(result.success).toBe(true);
     });
+
+    it("should substitute variables in template", async () => {
+      const result = await applyTemplate({
+        templateId: "basic",
+        code: "var-plan",
+        name: "Variable Plan",
+        basePath: testDir,
+        variables: {
+          projectName: "MyProject",
+          author: "Test Author",
+        },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
+    it("should handle template without variables", async () => {
+      const result = await applyTemplate({
+        templateId: "basic",
+        code: "no-var-plan",
+        name: "No Variables Plan",
+        basePath: testDir,
+        // No variables parameter
+      });
+
+      expect(result.success).toBe(true);
+    });
   });
 });
