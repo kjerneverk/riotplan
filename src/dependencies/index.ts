@@ -140,22 +140,40 @@ export function parseDependenciesFromContent(content: string): number[] {
     const dependencies: Set<number> = new Set();
 
     // Parse frontmatter depends-on
-    const frontmatterMatch = content.match(
-        /^---\n[\s\S]*?depends-on:\s*([^\n]+)\n[\s\S]*?---/
-    );
-    if (frontmatterMatch) {
-        const nums = frontmatterMatch[1].match(/\d+/g);
-        if (nums) {
-            nums.forEach((n) => dependencies.add(parseInt(n)));
+    // Extract frontmatter first to avoid polynomial regex
+    const frontmatterEnd = content.indexOf('---', 4);
+    if (content.startsWith('---\n') && frontmatterEnd > 0) {
+        const frontmatter = content.substring(4, frontmatterEnd);
+        const dependsOnMatch = frontmatter.match(/depends-on:\s*([^\n]+)/);
+        if (dependsOnMatch) {
+            const nums = dependsOnMatch[1].match(/\d+/g);
+            if (nums) {
+                nums.forEach((n) => dependencies.add(parseInt(n)));
+            }
         }
     }
 
     // Parse ## Dependencies section
-    const depSectionMatch = content.match(
-        /##\s+Dependencies\s*\n([\s\S]*?)(?=\n##|\n#\s|$)/i
-    );
-    if (depSectionMatch) {
-        const section = depSectionMatch[1];
+    // Use line-by-line parsing to avoid polynomial regex
+    const lines = content.split('\n');
+    const sectionLines: string[] = [];
+    let inSection = false;
+    
+    for (const line of lines) {
+        if (/^##\s+Dependencies$/i.test(line)) {
+            inSection = true;
+            continue;
+        }
+        if (inSection && /^#/.test(line)) {
+            break;
+        }
+        if (inSection) {
+            sectionLines.push(line);
+        }
+    }
+    
+    if (sectionLines.length > 0) {
+        const section = sectionLines.join('\n');
         // Look for bullet points with step references
         const bulletMatches = section.matchAll(
             /[-*]\s*(?:Step\s*)?(\d+)/gi

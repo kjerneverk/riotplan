@@ -205,9 +205,17 @@ function parsePlanResponse(content: string, _stepCount: number): GeneratedPlan {
         let jsonContent = content.trim();
         
         // Remove markdown code blocks
-        const codeBlockMatch = jsonContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        if (codeBlockMatch) {
-            jsonContent = codeBlockMatch[1].trim();
+        // Use indexOf to avoid polynomial regex
+        const startMarker = jsonContent.indexOf('```');
+        if (startMarker !== -1) {
+            const endMarker = jsonContent.indexOf('```', startMarker + 3);
+            if (endMarker !== -1) {
+                jsonContent = jsonContent.substring(startMarker + 3, endMarker).trim();
+                // Remove optional language identifier (json)
+                if (jsonContent.startsWith('json')) {
+                    jsonContent = jsonContent.substring(4).trim();
+                }
+            }
         }
         
         // Try to find JSON object (first { to last })

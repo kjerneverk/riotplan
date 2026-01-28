@@ -744,14 +744,18 @@ interface ParsedFrontmatter {
  * Parse YAML frontmatter from markdown content
  */
 function parseFrontmatter(content: string): ParsedFrontmatter {
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
-
-    if (!frontmatterMatch) {
+    // Use indexOf to avoid polynomial regex
+    if (!content.startsWith('---\n')) {
+        return { frontmatter: {}, body: content };
+    }
+    
+    const endMarker = content.indexOf('\n---\n', 4);
+    if (endMarker === -1) {
         return { frontmatter: {}, body: content };
     }
 
-    const frontmatterStr = frontmatterMatch[1];
-    const body = content.slice(frontmatterMatch[0].length);
+    const frontmatterStr = content.substring(4, endMarker);
+    const body = content.substring(endMarker + 5);
 
     // Simple YAML parsing (key: value, arrays with - prefix)
     const frontmatter: Record<string, unknown> = {};

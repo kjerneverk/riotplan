@@ -33,10 +33,24 @@ async function loadStatusMap(planPath: string): Promise<Map<number, string>> {
         
         // Parse the step progress table
         // Format: | 01 | Step Name | ✅ Completed | ... |
-        const tableMatch = content.match(/\|\s*Step\s*\|\s*Name\s*\|\s*Status[\s\S]*?(?=\n##|\n\n##|$)/i);
-        if (tableMatch) {
-            const lines = tableMatch[0].split("\n");
-            for (const line of lines) {
+        // Use line-by-line parsing to avoid polynomial regex
+        const lines = content.split('\n');
+        let inTable = false;
+        
+        for (const line of lines) {
+            // Look for table header
+            if (/\|\s*Step\s*\|\s*Name\s*\|\s*Status/i.test(line)) {
+                inTable = true;
+                continue;
+            }
+            
+            // Stop at section headers or double newlines
+            if (inTable && (/^##/.test(line) || line.trim() === '')) {
+                break;
+            }
+            
+            // Parse table rows
+            if (inTable && line.includes('|')) {
                 const match = line.match(/\|\s*(\d+)\s*\|[^|]+\|\s*([^|]+)\|/);
                 if (match) {
                     const stepNum = parseInt(match[1]);
@@ -114,12 +128,29 @@ function extractAcceptanceCriteria(content: string, stepNum: number): Acceptance
     const criteria: AcceptanceCriterion[] = [];
     
     // Find Acceptance Criteria section
-    const sectionMatch = content.match(/##\s*Acceptance\s+Criteria([\s\S]*?)(?=\n##|$)/i);
-    if (!sectionMatch) {
+    // Use line-by-line parsing to avoid polynomial regex
+    const lines = content.split('\n');
+    const sectionLines: string[] = [];
+    let inSection = false;
+    
+    for (const line of lines) {
+        if (/^##\s*Acceptance\s+Criteria$/i.test(line)) {
+            inSection = true;
+            continue;
+        }
+        if (inSection && /^##/.test(line)) {
+            break;
+        }
+        if (inSection) {
+            sectionLines.push(line);
+        }
+    }
+    
+    if (sectionLines.length === 0) {
         return criteria;
     }
     
-    const sectionContent = sectionMatch[1];
+    const sectionContent = sectionLines.join('\n');
     
     // Extract checkbox items
     const checkboxRegex = /^[-*]\s*\[([x ])\]\s*(.+)$/gim;

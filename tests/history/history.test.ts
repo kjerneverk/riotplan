@@ -16,6 +16,7 @@ import {
   getMilestone,
   listMilestones,
   rollbackToMilestone,
+  getLatestMilestone,
   initHistory,
   loadHistory,
   saveHistory,
@@ -169,6 +170,45 @@ describe("riotplan-history", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain("not found");
+    });
+
+    it("should fail rollback when milestone version not in revisions", () => {
+      // Create a milestone with a version that doesn't exist in revisions
+      const milestone = createMilestone(history, "v1.0");
+      // Manually change the milestone version to something invalid
+      milestone.version = "9.9.9";
+
+      const result = rollbackToMilestone(history, "v1.0");
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Revision not found");
+    });
+
+    it("should return empty array when no milestones exist", () => {
+      const milestones = listMilestones(history);
+      expect(milestones).toEqual([]);
+    });
+
+    it("should return undefined when getting milestone from empty history", () => {
+      const milestone = getMilestone(history, "v1.0");
+      expect(milestone).toBeUndefined();
+    });
+
+    it("should get latest milestone", () => {
+      createMilestone(history, "v1.0");
+      createRevision(history, "Update");
+      createMilestone(history, "v2.0");
+
+      const latest = getLatestMilestone(history);
+
+      expect(latest).toBeDefined();
+      expect(latest!.name).toBe("v2.0");
+      expect(latest!.index).toBe(1);
+    });
+
+    it("should return undefined when no milestones exist for getLatestMilestone", () => {
+      const latest = getLatestMilestone(history);
+      expect(latest).toBeUndefined();
     });
   });
 
