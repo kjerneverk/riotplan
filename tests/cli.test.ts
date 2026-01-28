@@ -14,7 +14,7 @@ describe("CLI", () => {
 
         it("should have version", () => {
             const program = createProgram();
-            expect(program.version()).toBe("1.0.0-dev.0");
+            expect(program.version()).toBe("1.0.1-dev.0");
         });
 
         it("should have description", () => {

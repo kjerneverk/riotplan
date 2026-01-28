@@ -47,7 +47,6 @@ export async function loadProvider(config: ProviderConfig): Promise<Provider> {
 }
 
 async function loadAnthropicProvider(_apiKey?: string): Promise<Provider> {
-    // eslint-disable-next-line import/no-extraneous-dependencies
     const { createAnthropicProvider } = await import('@riotprompt/execution-anthropic');
     return createAnthropicProvider();
 }
