@@ -3,7 +3,18 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createProgram } from "../src/cli/cli.js";
+
+// Read version from package.json to match CLI behavior
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(
+    readFileSync(join(__dirname, "../package.json"), "utf-8")
+);
+const EXPECTED_VERSION = packageJson.version;
 
 describe("CLI", () => {
     describe("program setup", () => {
@@ -14,7 +25,7 @@ describe("CLI", () => {
 
         it("should have version", () => {
             const program = createProgram();
-            expect(program.version()).toBe("1.0.2-dev.0");
+            expect(program.version()).toBe(EXPECTED_VERSION);
         });
 
         it("should have description", () => {
