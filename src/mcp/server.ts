@@ -272,6 +272,170 @@ async function main() {
         }
     );
 
+    // Idea stage tools
+    registerTool(
+        'riotplan_idea_create',
+        'Create a new idea without commitment. Start exploring a concept in the Idea stage.',
+        {
+            code: z.string(),
+            description: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_idea_add_note',
+        'Add a note to an idea. Capture thoughts and observations during exploration.',
+        {
+            note: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_idea_add_constraint',
+        'Add a constraint to an idea. Document limitations and requirements.',
+        {
+            constraint: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_idea_add_question',
+        'Add a question to an idea. Raise uncertainties that need resolution.',
+        {
+            question: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_idea_add_evidence',
+        'Add evidence to an idea. Attach supporting materials like diagrams, documents, or examples.',
+        {
+            evidencePath: z.string(),
+            description: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_idea_kill',
+        'Kill an idea. Abandon the idea with a reason, preserving the learning.',
+        {
+            reason: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    // Shaping stage tools
+    registerTool(
+        'riotplan_shaping_start',
+        'Start shaping an idea. Move from Idea to Shaping stage to explore approaches.',
+        {
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_shaping_add_approach',
+        'Add an approach to consider. Propose a way to solve the problem with explicit tradeoffs.',
+        {
+            name: z.string(),
+            description: z.string(),
+            tradeoffs: z.array(z.string()),
+            assumptions: z.array(z.string()).optional(),
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_shaping_add_feedback',
+        'Add feedback on an approach. Provide observations, concerns, or suggestions.',
+        {
+            approach: z.string(),
+            feedback: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_shaping_add_evidence',
+        'Add evidence for an approach. Attach supporting materials that inform the decision.',
+        {
+            approach: z.string(),
+            evidencePath: z.string(),
+            description: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_shaping_compare',
+        'Compare all approaches. Generate a side-by-side comparison of tradeoffs.',
+        {
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_shaping_select',
+        'Select an approach. Choose the best approach and move to Built stage.',
+        {
+            approach: z.string(),
+            reason: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    // History and checkpoint tools
+    registerTool(
+        'riotplan_checkpoint_create',
+        'Create a checkpoint. Save a snapshot of the current state with prompt context.',
+        {
+            name: z.string(),
+            message: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_checkpoint_list',
+        'List all checkpoints. Show all saved checkpoints with timestamps.',
+        {
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_checkpoint_show',
+        'Show checkpoint details. Display the full checkpoint snapshot and prompt context.',
+        {
+            checkpoint: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_checkpoint_restore',
+        'Restore a checkpoint. Revert to a previous state.',
+        {
+            checkpoint: z.string(),
+            directory: z.string().optional(),
+        }
+    );
+
+    registerTool(
+        'riotplan_history_show',
+        'Show ideation history. Display the complete timeline of events.',
+        {
+            directory: z.string().optional(),
+            limit: z.number().optional(),
+            sinceCheckpoint: z.string().optional(),
+        }
+    );
+
     // ========================================================================
     // Resources Handlers
     // ========================================================================
