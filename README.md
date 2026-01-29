@@ -2,6 +2,8 @@
 
 Framework for long-lived, stateful AI workflows (plans).
 
+**Now available as an MCP server!** See [MCP.md](./MCP.md) for integration with Cursor and other AI assistants.
+
 ## What is a Plan?
 
 A **plan** is a structured way to manage multi-step AI-assisted tasks that:
