@@ -133,9 +133,13 @@ async function main() {
                     }
 
                     const cleanData = removeUndefinedValues(result.data);
+                    const textContent = cleanData !== undefined 
+                        ? JSON.stringify(cleanData, null, 2)
+                        : result.message || 'Success';
+                    
                     content.push({
                         type: 'text' as const,
-                        text: JSON.stringify(cleanData, null, 2),
+                        text: textContent,
                     });
 
                     return { content };
@@ -288,7 +292,7 @@ async function main() {
         'Add a note to an idea. Capture thoughts and observations during exploration.',
         {
             note: z.string(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -297,7 +301,7 @@ async function main() {
         'Add a constraint to an idea. Document limitations and requirements.',
         {
             constraint: z.string(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -306,7 +310,7 @@ async function main() {
         'Add a question to an idea. Raise uncertainties that need resolution.',
         {
             question: z.string(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -316,7 +320,7 @@ async function main() {
         {
             evidencePath: z.string(),
             description: z.string(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -325,7 +329,7 @@ async function main() {
         'Kill an idea. Abandon the idea with a reason, preserving the learning.',
         {
             reason: z.string(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -334,7 +338,7 @@ async function main() {
         'riotplan_shaping_start',
         'Start shaping an idea. Move from Idea to Shaping stage to explore approaches.',
         {
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -346,7 +350,7 @@ async function main() {
             description: z.string(),
             tradeoffs: z.array(z.string()),
             assumptions: z.array(z.string()).optional(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -356,7 +360,7 @@ async function main() {
         {
             approach: z.string(),
             feedback: z.string(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -367,7 +371,7 @@ async function main() {
             approach: z.string(),
             evidencePath: z.string(),
             description: z.string(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -375,7 +379,7 @@ async function main() {
         'riotplan_shaping_compare',
         'Compare all approaches. Generate a side-by-side comparison of tradeoffs.',
         {
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -385,7 +389,7 @@ async function main() {
         {
             approach: z.string(),
             reason: z.string(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -396,7 +400,7 @@ async function main() {
         {
             name: z.string(),
             message: z.string(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -404,7 +408,7 @@ async function main() {
         'riotplan_checkpoint_list',
         'List all checkpoints. Show all saved checkpoints with timestamps.',
         {
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -413,7 +417,7 @@ async function main() {
         'Show checkpoint details. Display the full checkpoint snapshot and prompt context.',
         {
             checkpoint: z.string(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -422,7 +426,7 @@ async function main() {
         'Restore a checkpoint. Revert to a previous state.',
         {
             checkpoint: z.string(),
-            directory: z.string().optional(),
+            path: z.string().optional(),
         }
     );
 
@@ -430,7 +434,7 @@ async function main() {
         'riotplan_history_show',
         'Show ideation history. Display the complete timeline of events.',
         {
-            directory: z.string().optional(),
+            path: z.string().optional(),
             limit: z.number().optional(),
             sinceCheckpoint: z.string().optional(),
         }

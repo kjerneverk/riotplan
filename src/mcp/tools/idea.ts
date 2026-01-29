@@ -32,8 +32,21 @@ export const IdeaAddQuestionSchema = z.object({
 
 export const IdeaAddEvidenceSchema = z.object({
     path: z.string().optional().describe("Path to idea directory"),
-    evidencePath: z.string().describe("Path to evidence file (image, doc, etc)"),
-    description: z.string().optional().describe("Description of the evidence"),
+    evidencePath: z.string().optional().describe("Path to evidence file, or 'inline' for pasted text"),
+    description: z.string().describe("Description of the evidence and its relevance"),
+    content: z.string().optional().describe("Inline content if evidencePath is 'inline' (for pasted text/transcripts)"),
+    source: z.string().optional().describe("Where evidence came from (e.g., 'web search', 'user paste', 'file analysis')"),
+    gatheringMethod: z.enum(["manual", "model-assisted"]).optional().describe("How evidence was gathered"),
+    relevanceScore: z.number().min(0).max(1).optional().describe("Relevance score (0-1) from model if model-assisted"),
+    summary: z.string().optional().describe("Model-generated summary of the evidence"),
+});
+
+export const IdeaAddNarrativeSchema = z.object({
+    path: z.string().optional().describe("Path to idea directory"),
+    content: z.string().describe("Raw narrative content (thoughts, observations, context)"),
+    source: z.enum(["typing", "voice", "paste", "import"]).optional().describe("Source of the narrative"),
+    context: z.string().optional().describe("Context about what prompted this narrative"),
+    speaker: z.string().optional().describe("Who is speaking (user, assistant, or name)"),
 });
 
 export const IdeaKillSchema = z.object({
@@ -231,6 +244,36 @@ export async function ideaAddEvidence(args: z.infer<typeof IdeaAddEvidenceSchema
     const ideaPath = args.path || process.cwd();
     const ideaFile = join(ideaPath, "IDEA.md");
   
+    let evidencePath = args.evidencePath;
+    let evidenceId: string | undefined;
+  
+    // Handle inline evidence (pasted text)
+    if (evidencePath === "inline" || args.content) {
+        if (!args.content) {
+            throw new Error("Content is required when evidencePath is 'inline'");
+        }
+    
+        // Create evidence directory at top level
+        const evidenceDir = join(ideaPath, "evidence");
+        await mkdir(evidenceDir, { recursive: true });
+    
+        // Generate unique ID for evidence
+        evidenceId = `evidence-${Date.now()}`;
+        const evidenceFilePath = join(evidenceDir, `${evidenceId}.md`);
+    
+        // Write evidence content
+        const evidenceContent = `# Evidence: ${args.description}\n\n` +
+            `**Source**: ${args.source || 'user paste'}\n` +
+            `**Added**: ${formatTimestamp()}\n` +
+            (args.gatheringMethod ? `**Gathering Method**: ${args.gatheringMethod}\n` : '') +
+            (args.relevanceScore !== undefined ? `**Relevance Score**: ${args.relevanceScore}\n` : '') +
+            `\n---\n\n${args.content}`;
+    
+        await writeFile(evidenceFilePath, evidenceContent);
+        evidencePath = `evidence/${evidenceId}.md`;
+    }
+  
+    // Update IDEA.md
     let content = await readFile(ideaFile, "utf-8");
   
     const evidenceSection = "## Evidence";
@@ -243,8 +286,7 @@ export async function ideaAddEvidence(args: z.infer<typeof IdeaAddEvidenceSchema
     const nextSectionIndex = content.indexOf("\n## ", evidenceIndex + evidenceSection.length);
     const insertPoint = nextSectionIndex === -1 ? content.length : nextSectionIndex;
   
-    const description = args.description ? ` - ${args.description}` : "";
-    const evidence = `- [${args.evidencePath}](${args.evidencePath})${description}\n`;
+    const evidence = `- [${args.description}](${evidencePath})${args.source ? ` (${args.source})` : ''}\n`;
     content = content.slice(0, insertPoint) + evidence + content.slice(insertPoint);
   
     await writeFile(ideaFile, content, "utf-8");
@@ -254,12 +296,36 @@ export async function ideaAddEvidence(args: z.infer<typeof IdeaAddEvidenceSchema
         timestamp: formatTimestamp(),
         type: 'evidence_added',
         data: { 
-            evidencePath: args.evidencePath,
+            evidencePath: evidencePath,
             description: args.description,
+            source: args.source,
+            gatheringMethod: args.gatheringMethod,
+            relevanceScore: args.relevanceScore,
+            summary: args.summary,
+            evidenceId,
         },
     });
   
-    return `✅ Evidence added to idea`;
+    return `✅ Evidence added: ${args.description}${evidenceId ? ` (ID: ${evidenceId})` : ''}`;
+}
+
+export async function ideaAddNarrative(args: z.infer<typeof IdeaAddNarrativeSchema>): Promise<string> {
+    const ideaPath = args.path || process.cwd();
+  
+    // Log narrative chunk to timeline (not to IDEA.md)
+    // Narrative chunks are kept in the timeline for full-fidelity context
+    await logEvent(ideaPath, {
+        timestamp: formatTimestamp(),
+        type: 'narrative_chunk',
+        data: { 
+            content: args.content,
+            source: args.source,
+            context: args.context,
+            speaker: args.speaker || 'user',
+        },
+    });
+  
+    return `✅ Narrative chunk added to timeline (${args.content.length} characters)`;
 }
 
 export async function ideaKill(args: z.infer<typeof IdeaKillSchema>): Promise<string> {
@@ -299,7 +365,7 @@ export async function executeIdeaCreate(args: any, _context: ToolExecutionContex
     try {
         const validated = IdeaCreateSchema.parse(args);
         const result = await ideaCreate(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -309,7 +375,7 @@ export async function executeIdeaAddNote(args: any, _context: ToolExecutionConte
     try {
         const validated = IdeaAddNoteSchema.parse(args);
         const result = await ideaAddNote(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -319,7 +385,7 @@ export async function executeIdeaAddConstraint(args: any, _context: ToolExecutio
     try {
         const validated = IdeaAddConstraintSchema.parse(args);
         const result = await ideaAddConstraint(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -329,7 +395,7 @@ export async function executeIdeaAddQuestion(args: any, _context: ToolExecutionC
     try {
         const validated = IdeaAddQuestionSchema.parse(args);
         const result = await ideaAddQuestion(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -339,7 +405,17 @@ export async function executeIdeaAddEvidence(args: any, _context: ToolExecutionC
     try {
         const validated = IdeaAddEvidenceSchema.parse(args);
         const result = await ideaAddEvidence(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function executeIdeaAddNarrative(args: any, _context: ToolExecutionContext): Promise<ToolResult> {
+    try {
+        const validated = IdeaAddNarrativeSchema.parse(args);
+        const result = await ideaAddNarrative(validated);
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -349,7 +425,7 @@ export async function executeIdeaKill(args: any, _context: ToolExecutionContext)
     try {
         const validated = IdeaKillSchema.parse(args);
         const result = await ideaKill(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -384,8 +460,14 @@ export const ideaAddQuestionTool: McpTool = {
 
 export const ideaAddEvidenceTool: McpTool = {
     name: "riotplan_idea_add_evidence",
-    description: "Attach evidence to an idea (documents, images, diagrams, code samples)",
+    description: "Attach evidence to an idea. YOU (the model) should gather evidence using your own capabilities (web search, file reading, analysis), then use this tool to capture and organize it. Supports both file references and inline content (for pasted text, transcripts, web research findings, etc.).",
     inputSchema: IdeaAddEvidenceSchema.shape as any,
+};
+
+export const ideaAddNarrativeTool: McpTool = {
+    name: "riotplan_idea_add_narrative",
+    description: "Add raw narrative content to the timeline. Use this to capture conversational context, thinking-out-loud, or any free-form input that doesn't fit structured categories. Narrative chunks preserve full-fidelity context.",
+    inputSchema: IdeaAddNarrativeSchema.shape as any,
 };
 
 export const ideaKillTool: McpTool = {

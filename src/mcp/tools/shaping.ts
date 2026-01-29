@@ -336,7 +336,7 @@ export async function executeShapingStart(args: any, _context: ToolExecutionCont
     try {
         const validated = ShapingStartSchema.parse(args);
         const result = await shapingStart(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -346,7 +346,7 @@ export async function executeShapingAddApproach(args: any, _context: ToolExecuti
     try {
         const validated = ShapingAddApproachSchema.parse(args);
         const result = await shapingAddApproach(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -356,7 +356,7 @@ export async function executeShapingAddFeedback(args: any, _context: ToolExecuti
     try {
         const validated = ShapingAddFeedbackSchema.parse(args);
         const result = await shapingAddFeedback(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -366,7 +366,7 @@ export async function executeShapingAddEvidence(args: any, _context: ToolExecuti
     try {
         const validated = ShapingAddEvidenceSchema.parse(args);
         const result = await shapingAddEvidence(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -376,7 +376,7 @@ export async function executeShapingCompare(args: any, _context: ToolExecutionCo
     try {
         const validated = ShapingCompareSchema.parse(args);
         const result = await shapingCompare(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -386,7 +386,7 @@ export async function executeShapingSelect(args: any, _context: ToolExecutionCon
     try {
         const validated = ShapingSelectSchema.parse(args);
         const result = await shapingSelect(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }

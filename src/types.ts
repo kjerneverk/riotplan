@@ -204,6 +204,11 @@ export type EvidenceType =
     | "reference"; // Reference material
 
 /**
+ * Method used to gather evidence
+ */
+export type EvidenceGatheringMethod = "manual" | "model-assisted";
+
+/**
  * Evidence record for inception phase materials
  *
  * Tracks documentation gathered during plan inception to support
@@ -233,6 +238,179 @@ export interface EvidenceRecord {
 
     /** Tags for categorization */
     tags?: string[];
+
+    /** How evidence was gathered */
+    gatheringMethod?: EvidenceGatheringMethod;
+
+    /** Relevance score (0-1) from model if model-assisted */
+    relevanceScore?: number;
+}
+
+// ===== TIMELINE/HISTORY TYPES =====
+
+/**
+ * Source of narrative input
+ */
+export type NarrativeSource = "typing" | "voice" | "paste" | "import";
+
+/**
+ * Speaker in narrative chunk
+ */
+export type NarrativeSpeaker = "user" | "assistant" | string;
+
+/**
+ * Timeline event types
+ */
+export type TimelineEventType =
+    | "idea_created"
+    | "note_added"
+    | "constraint_added"
+    | "question_added"
+    | "evidence_added"
+    | "idea_killed"
+    | "shaping_started"
+    | "approach_added"
+    | "feedback_added"
+    | "approach_compared"
+    | "approach_selected"
+    | "narrative_chunk"
+    | "checkpoint_created"
+    | "checkpoint_restored";
+
+/**
+ * Base timeline event structure
+ */
+export interface TimelineEvent {
+    /** ISO 8601 timestamp */
+    timestamp: string;
+
+    /** Event type identifier */
+    type: TimelineEventType;
+
+    /** Event-specific data */
+    data: Record<string, any>;
+}
+
+/**
+ * Narrative chunk event - captures raw conversational input
+ */
+export interface NarrativeChunkEvent extends TimelineEvent {
+    type: "narrative_chunk";
+    data: {
+        /** Raw user input */
+        content: string;
+
+        /** Source of input */
+        source?: NarrativeSource;
+
+        /** Context about what prompted this */
+        context?: string;
+
+        /** Who is speaking */
+        speaker?: NarrativeSpeaker;
+    };
+}
+
+/**
+ * Checkpoint created event
+ */
+export interface CheckpointCreatedEvent extends TimelineEvent {
+    type: "checkpoint_created";
+    data: {
+        /** Checkpoint name (kebab-case) */
+        name: string;
+
+        /** Description of checkpoint */
+        message: string;
+
+        /** Path to checkpoint snapshot (relative) */
+        snapshotPath?: string;
+
+        /** Path to prompt context (relative) */
+        promptPath?: string;
+    };
+}
+
+/**
+ * Checkpoint restored event
+ */
+export interface CheckpointRestoredEvent extends TimelineEvent {
+    type: "checkpoint_restored";
+    data: {
+        /** Name of restored checkpoint */
+        checkpoint: string;
+
+        /** Timestamp of original checkpoint */
+        restoredFrom: string;
+    };
+}
+
+/**
+ * Evidence added event
+ */
+export interface EvidenceAddedEvent extends TimelineEvent {
+    type: "evidence_added";
+    data: {
+        /** Filesystem path or URL */
+        evidencePath: string;
+
+        /** What this evidence shows */
+        description: string;
+
+        /** How evidence was gathered */
+        gatheringMethod?: EvidenceGatheringMethod;
+
+        /** Relevance score (0-1) from model */
+        relevanceScore?: number;
+
+        /** Model-generated summary */
+        summary?: string;
+    };
+}
+
+/**
+ * File snapshot in checkpoint
+ */
+export interface FileSnapshot {
+    /** Whether file exists */
+    exists: boolean;
+
+    /** File content (if exists) */
+    content?: string;
+}
+
+/**
+ * Checkpoint metadata structure
+ */
+export interface CheckpointMetadata {
+    /** Checkpoint name */
+    name: string;
+
+    /** When created (ISO 8601) */
+    timestamp: string;
+
+    /** User-provided description */
+    message: string;
+
+    /** Current stage */
+    stage: string;
+
+    /** Snapshot of plan files */
+    snapshot: {
+        timestamp: string;
+        idea?: FileSnapshot;
+        shaping?: FileSnapshot;
+        lifecycle?: FileSnapshot;
+    };
+
+    /** Context information */
+    context: {
+        /** List of .md files at checkpoint */
+        filesChanged: string[];
+
+        /** Timeline events since last checkpoint */
+        eventsSinceLastCheckpoint: number;
+    };
 }
 
 // ===== REVISION/HISTORY TYPES =====

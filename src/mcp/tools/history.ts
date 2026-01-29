@@ -7,28 +7,11 @@ import { join } from "node:path";
 import { readFile, writeFile, mkdir, appendFile, readdir } from "node:fs/promises";
 import { formatTimestamp } from "./shared.js";
 import type { ToolResult, ToolExecutionContext } from '../types.js';
+import type { TimelineEvent, CheckpointMetadata } from '../../types.js';
 
-// History event types
-export type HistoryEventType = 
-  | 'idea_created'
-  | 'note_added'
-  | 'constraint_added'
-  | 'question_added'
-  | 'evidence_added'
-  | 'idea_killed'
-  | 'shaping_started'
-  | 'approach_added'
-  | 'feedback_added'
-  | 'approach_compared'
-  | 'approach_selected'
-  | 'checkpoint_created'
-  | 'checkpoint_restored';
-
-export interface HistoryEvent {
-  timestamp: string;
-  type: HistoryEventType;
-  data: Record<string, any>;
-}
+// Re-export for backward compatibility
+export type HistoryEvent = TimelineEvent;
+export type { CheckpointMetadata };
 
 // Tool schemas
 export const CheckpointCreateSchema = z.object({
@@ -64,7 +47,7 @@ export const HistoryShowSchema = z.object({
 /**
  * Log an event to the timeline
  */
-export async function logEvent(planPath: string, event: HistoryEvent): Promise<void> {
+export async function logEvent(planPath: string, event: TimelineEvent): Promise<void> {
     const historyDir = join(planPath, '.history');
     await mkdir(historyDir, { recursive: true });
   
@@ -77,7 +60,7 @@ export async function logEvent(planPath: string, event: HistoryEvent): Promise<v
 /**
  * Read timeline events
  */
-export async function readTimeline(planPath: string): Promise<HistoryEvent[]> {
+export async function readTimeline(planPath: string): Promise<TimelineEvent[]> {
     const timelinePath = join(planPath, '.history', 'timeline.jsonl');
   
     try {
@@ -97,9 +80,19 @@ export async function readTimeline(planPath: string): Promise<HistoryEvent[]> {
 /**
  * Capture current state snapshot
  */
-async function captureCurrentState(planPath: string): Promise<any> {
-    const snapshot: any = {
+async function captureCurrentState(planPath: string): Promise<{
+    timestamp: string;
+    stage: string;
+    idea?: { exists: boolean; content?: string };
+    shaping?: { exists: boolean; content?: string };
+    lifecycle?: { exists: boolean; content?: string };
+}> {
+    const snapshot = {
         timestamp: formatTimestamp(),
+        stage: 'unknown',
+        idea: undefined as { exists: boolean; content?: string } | undefined,
+        shaping: undefined as { exists: boolean; content?: string } | undefined,
+        lifecycle: undefined as { exists: boolean; content?: string } | undefined,
     };
   
     // Try to read IDEA.md
@@ -139,7 +132,6 @@ async function captureCurrentState(planPath: string): Promise<any> {
         }
     } catch {
         snapshot.lifecycle = { exists: false };
-        snapshot.stage = 'unknown';
     }
   
     return snapshot;
@@ -269,12 +261,17 @@ export async function checkpointCreate(args: z.infer<typeof CheckpointCreateSche
     const snapshot = await captureCurrentState(planPath);
   
     // 3. Save checkpoint metadata
-    const checkpoint = {
+    const checkpoint: CheckpointMetadata = {
         name,
         timestamp: snapshot.timestamp,
         message,
         stage: snapshot.stage,
-        snapshot,
+        snapshot: {
+            timestamp: snapshot.timestamp,
+            idea: snapshot.idea,
+            shaping: snapshot.shaping,
+            lifecycle: snapshot.lifecycle,
+        },
         context: {
             filesChanged: await getChangedFiles(planPath),
             eventsSinceLastCheckpoint: await countEventsSinceLastCheckpoint(planPath),
@@ -292,11 +289,17 @@ export async function checkpointCreate(args: z.infer<typeof CheckpointCreateSche
     }
   
     // 5. Log checkpoint event
-    await logEvent(planPath, {
+    const checkpointEvent: TimelineEvent = {
         timestamp: snapshot.timestamp,
         type: 'checkpoint_created',
-        data: { name, message },
-    });
+        data: { 
+            name, 
+            message,
+            snapshotPath: `.history/checkpoints/${name}.json`,
+            promptPath: `.history/prompts/${name}.md`,
+        },
+    };
+    await logEvent(planPath, checkpointEvent);
   
     return `✅ Checkpoint created: ${name}\n\nLocation: ${planPath}/.history/checkpoints/${name}.json\nPrompt: ${planPath}/.history/prompts/${name}.md\n\nYou can restore this checkpoint later with:\n  riotplan_checkpoint_restore({ checkpoint: "${name}" })`;
 }
@@ -317,7 +320,7 @@ export async function checkpointList(args: z.infer<typeof CheckpointListSchema>)
     
         for (const file of checkpoints) {
             const content = await readFile(join(checkpointDir, file), 'utf-8');
-            const checkpoint = JSON.parse(content);
+            const checkpoint: CheckpointMetadata = JSON.parse(content);
             const time = new Date(checkpoint.timestamp).toLocaleString();
             output += `- **${checkpoint.name}** (${time})\n`;
             output += `  Stage: ${checkpoint.stage}\n`;
@@ -339,7 +342,7 @@ export async function checkpointShow(args: z.infer<typeof CheckpointShowSchema>)
     const checkpointPath = join(planPath, '.history', 'checkpoints', `${args.checkpoint}.json`);
   
     const content = await readFile(checkpointPath, 'utf-8');
-    const checkpoint = JSON.parse(content);
+    const checkpoint: CheckpointMetadata = JSON.parse(content);
   
     const time = new Date(checkpoint.timestamp).toLocaleString();
   
@@ -364,30 +367,31 @@ export async function checkpointRestore(args: z.infer<typeof CheckpointRestoreSc
     const checkpointPath = join(planPath, '.history', 'checkpoints', `${args.checkpoint}.json`);
   
     const content = await readFile(checkpointPath, 'utf-8');
-    const checkpoint = JSON.parse(content);
+    const checkpoint: CheckpointMetadata = JSON.parse(content);
   
     // Restore files from snapshot
-    if (checkpoint.snapshot.idea?.exists) {
+    if (checkpoint.snapshot.idea?.exists && checkpoint.snapshot.idea.content) {
         await writeFile(join(planPath, 'IDEA.md'), checkpoint.snapshot.idea.content);
     }
   
-    if (checkpoint.snapshot.shaping?.exists) {
+    if (checkpoint.snapshot.shaping?.exists && checkpoint.snapshot.shaping.content) {
         await writeFile(join(planPath, 'SHAPING.md'), checkpoint.snapshot.shaping.content);
     }
   
-    if (checkpoint.snapshot.lifecycle?.exists) {
+    if (checkpoint.snapshot.lifecycle?.exists && checkpoint.snapshot.lifecycle.content) {
         await writeFile(join(planPath, 'LIFECYCLE.md'), checkpoint.snapshot.lifecycle.content);
     }
   
     // Log restoration event
-    await logEvent(planPath, {
+    const restoreEvent: TimelineEvent = {
         timestamp: formatTimestamp(),
         type: 'checkpoint_restored',
         data: { 
             checkpoint: args.checkpoint,
             restoredFrom: checkpoint.timestamp,
         },
-    });
+    };
+    await logEvent(planPath, restoreEvent);
   
     return `✅ Restored to checkpoint: ${args.checkpoint}\n\nRestored from: ${checkpoint.timestamp}\nStage: ${checkpoint.stage}\n\nFiles restored:\n${checkpoint.context.filesChanged.map((f: string) => `  - ${f}`).join('\n')}`;
 }
@@ -434,7 +438,7 @@ export async function executeCheckpointCreate(args: any, _context: ToolExecution
     try {
         const validated = CheckpointCreateSchema.parse(args);
         const result = await checkpointCreate(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -444,7 +448,7 @@ export async function executeCheckpointList(args: any, _context: ToolExecutionCo
     try {
         const validated = CheckpointListSchema.parse(args);
         const result = await checkpointList(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -454,7 +458,7 @@ export async function executeCheckpointShow(args: any, _context: ToolExecutionCo
     try {
         const validated = CheckpointShowSchema.parse(args);
         const result = await checkpointShow(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -464,7 +468,7 @@ export async function executeCheckpointRestore(args: any, _context: ToolExecutio
     try {
         const validated = CheckpointRestoreSchema.parse(args);
         const result = await checkpointRestore(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }
@@ -474,7 +478,7 @@ export async function executeHistoryShow(args: any, _context: ToolExecutionConte
     try {
         const validated = HistoryShowSchema.parse(args);
         const result = await historyShow(validated);
-        return { success: true, message: result };
+        return { success: true, data: { message: result } };
     } catch (error: any) {
         return { success: false, error: error.message };
     }

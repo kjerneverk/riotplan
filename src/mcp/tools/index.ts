@@ -27,12 +27,14 @@ import {
     ideaAddConstraintTool,
     ideaAddQuestionTool,
     ideaAddEvidenceTool,
+    ideaAddNarrativeTool,
     ideaKillTool,
     executeIdeaCreate,
     executeIdeaAddNote,
     executeIdeaAddConstraint,
     executeIdeaAddQuestion,
     executeIdeaAddEvidence,
+    executeIdeaAddNarrative,
     executeIdeaKill,
 } from './idea.js';
 import {
@@ -100,6 +102,8 @@ export async function executeTool(
                 return await executeIdeaAddQuestion(args, context);
             case 'riotplan_idea_add_evidence':
                 return await executeIdeaAddEvidence(args, context);
+            case 'riotplan_idea_add_narrative':
+                return await executeIdeaAddNarrative(args, context);
             case 'riotplan_idea_kill':
                 return await executeIdeaKill(args, context);
             // Shaping tools
@@ -161,6 +165,7 @@ export const tools: McpTool[] = [
     ideaAddConstraintTool,
     ideaAddQuestionTool,
     ideaAddEvidenceTool,
+    ideaAddNarrativeTool,
     ideaKillTool,
     // Shaping tools
     shapingStartTool,

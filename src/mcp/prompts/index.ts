@@ -112,6 +112,28 @@ export function getPrompts(): McpPrompt[] {
             ],
         },
         {
+            name: 'develop_plan',
+            description: 'Refine a generated plan through conversational feedback. Captures full narrative of plan evolution with checkpoints.',
+            arguments: [
+                {
+                    name: 'path',
+                    description: 'Path to the plan directory to develop',
+                    required: false,
+                },
+            ],
+        },
+        {
+            name: 'execute_plan',
+            description: 'Execute a plan with intelligent state management. Automatically determines next step, guides through tasks, and manages execution state.',
+            arguments: [
+                {
+                    name: 'path',
+                    description: 'Path to the plan directory to execute',
+                    required: false,
+                },
+            ],
+        },
+        {
             name: 'execute_step',
             description: 'Execute a single step from a plan with proper status tracking',
             arguments: [
