@@ -1,6 +1,6 @@
 {
   "name": "@riotprompt/riotplan",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Framework for long-lived, stateful AI workflows (plans)",
   "type": "module",
   "main": "./dist/index.js",
@@ -42,7 +42,7 @@
     "url": "https://github.com/kjerneverk/riotplan"
   },
   "dependencies": {
-    "@theunwalked/cardigantime": "^0.0.22",
+    "@theunwalked/cardigantime": "^0.0.23",
     "@types/inquirer": "^9.0.9",
     "chalk": "^5.4.1",
     "commander": "^14.0.2",
