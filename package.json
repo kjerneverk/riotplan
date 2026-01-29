@@ -6,7 +6,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "riotplan": "./dist/bin.js"
+    "riotplan": "./dist/bin.js",
+    "riotplan-mcp": "./dist/mcp-server.js"
   },
   "exports": {
     ".": {
@@ -19,12 +20,14 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "vite build",
+    "build": "vite build && node scripts/build-mcp.js && chmod 755 ./dist/mcp-server.js 2>/dev/null || true",
     "test": "vitest run --coverage",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src",
     "precommit": "npm run build && npm run lint && npm run test",
-    "prepublishOnly": "npm run clean && npm run build"
+    "prepublishOnly": "npm run clean && npm run build",
+    "mcp:build": "vite build && chmod 755 ./dist/mcp-server.js 2>/dev/null || true",
+    "mcp:inspect": "mcp-inspector npx -y @riotprompt/riotplan"
   },
   "keywords": [
     "plan",
@@ -42,13 +45,15 @@
     "url": "https://github.com/kjerneverk/riotplan"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
     "@theunwalked/cardigantime": "^0.0.23",
     "@types/inquirer": "^9.0.9",
     "chalk": "^5.4.1",
     "commander": "^14.0.2",
     "inquirer": "^13.2.1",
     "js-yaml": "^4.1.1",
-    "marked": "^17.0.1"
+    "marked": "^17.0.1",
+    "zod": "^4.1.12"
   },
   "peerDependencies": {
     "@riotprompt/agentic": "^1.0.2",
