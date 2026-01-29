@@ -10,12 +10,12 @@ export async function readStepsResource(path: string): Promise<StepsResource> {
         const plan = await loadPlan(path);
         
         return {
-            planPath: plan.path,
+            planPath: plan.metadata.path,
             steps: plan.steps.map(s => ({
                 number: s.number,
                 title: s.title,
                 status: s.status,
-                file: s.file,
+                file: s.filename,
             })),
         };
     } catch (error) {

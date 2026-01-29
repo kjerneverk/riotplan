@@ -55,12 +55,12 @@ export async function executeStepList(
         }
 
         return createSuccess({
-            planPath: plan.path,
+            planPath: plan.metadata.path,
             steps: steps.map(s => ({
                 number: s.number,
                 title: s.title,
                 status: s.status,
-                file: s.file,
+                file: s.filename,
                 startedAt: s.startedAt,
                 completedAt: s.completedAt,
             })),
@@ -113,7 +113,7 @@ export async function executeStepStart(
         // Update plan state
         plan.state.currentStep = args.step;
         plan.state.status = 'in_progress';
-        plan.state.lastUpdated = new Date();
+        plan.state.lastUpdatedAt = new Date();
         
         // Regenerate STATUS.md
         const statusContent = generateStatus(plan);
@@ -169,8 +169,8 @@ export async function executeStepComplete(
         }
         
         // Update plan state
-        plan.state.lastCompleted = args.step;
-        plan.state.lastUpdated = new Date();
+        plan.state.lastCompletedStep = args.step;
+        plan.state.lastUpdatedAt = new Date();
         
         // Find next pending step or mark as completed
         const nextPending = plan.steps.find(s => s.status === 'pending');

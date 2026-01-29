@@ -34,7 +34,7 @@ export async function executeValidate(
     try {
         const planPath = args.path ? args.path : resolveDirectory(args, context);
         
-        const result = await validatePlan(planPath, { fix: args.fix || false });
+        const result = await validatePlan(planPath);
 
         return createSuccess(
             {
@@ -42,7 +42,7 @@ export async function executeValidate(
                 valid: result.valid,
                 errors: result.errors || [],
                 warnings: result.warnings || [],
-                fixed: result.fixed || [],
+                fixable: result.fixable || [],
             },
             result.valid
                 ? 'Plan validation passed'

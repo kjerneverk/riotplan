@@ -2,7 +2,7 @@
 
 Framework for long-lived, stateful AI workflows (plans).
 
-**Now available as an MCP server!** See [MCP.md](./MCP.md) for integration with Cursor and other AI assistants.
+**Now available as an MCP server!** Integrate with Cursor and other AI assistants - see [MCP Integration](#mcp-integration) below.
 
 ## What is a Plan?
 
@@ -358,6 +358,74 @@ _No issues encountered._
 - `@riotprompt/execution` - LLM provider interfaces
 - `@riotprompt/riotplan-commands-*` - Command packages (plan, status, step, feedback)
 
+## MCP Integration
+
+RiotPlan is available as an MCP (Model Context Protocol) server, allowing AI assistants like Cursor to manage plans directly.
+
+### Setup
+
+Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "riotplan": {
+      "command": "npx",
+      "args": ["-y", "@riotprompt/riotplan", "riotplan-mcp"]
+    }
+  }
+}
+```
+
+### MCP Tools
+
+- **`riotplan_create`** - Create new plans with AI-generated steps
+- **`riotplan_status`** - Show plan status and progress
+- **`riotplan_step_list`** - List all steps
+- **`riotplan_step_start`** - Mark step as started
+- **`riotplan_step_complete`** - Mark step as completed
+- **`riotplan_step_add`** - Add new steps dynamically
+- **`riotplan_validate`** - Validate plan structure
+- **`riotplan_generate`** - Generate plan content with AI
+
+### MCP Resources
+
+Read-only access to plan data:
+
+- `riotplan://plan/{path}` - Plan metadata and structure
+- `riotplan://status/{path}` - Current status and progress
+- `riotplan://steps/{path}` - List of all steps
+- `riotplan://step/{path}?number={n}` - Specific step content
+
+### MCP Prompts
+
+Workflow templates for common tasks:
+
+- **`create_plan`** - Guided plan creation workflow
+- **`execute_step`** - Step execution workflow with status tracking
+- **`track_progress`** - Progress monitoring and status updates
+
+### Example MCP Usage
+
+```typescript
+// AI assistant creates a plan
+riotplan_create({
+  code: "user-auth",
+  description: "Implement JWT-based authentication",
+  steps: 6
+})
+
+// Check status
+riotplan_status({ path: "./user-auth" })
+
+// Start and complete steps
+riotplan_step_start({ path: "./user-auth", step: 1 })
+// ... do the work ...
+riotplan_step_complete({ path: "./user-auth", step: 1 })
+```
+
+See [guide/mcp.md](./guide/mcp.md) for detailed MCP documentation.
+
 ## Philosophy
 
 Plans bridge the gap between:
@@ -376,5 +444,3 @@ A plan provides structure for complex, iterative AI-assisted work where:
 Apache-2.0
 
 <!-- v1.0.0 -->
-
-TEST

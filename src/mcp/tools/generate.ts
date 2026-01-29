@@ -3,7 +3,7 @@
  */
 
 import type { McpTool, ToolResult, ToolExecutionContext } from '../types.js';
-import { resolveDirectory, formatError, createSuccess } from './shared.js';
+import { formatError, createSuccess } from './shared.js';
 import { generatePlan } from '../../ai/generator.js';
 import { loadProvider } from '../../ai/provider-loader.js';
 
@@ -38,7 +38,7 @@ export const generateTool: McpTool = {
 
 export async function executeGenerate(
     args: any,
-    context: ToolExecutionContext
+    _context: ToolExecutionContext
 ): Promise<ToolResult> {
     try {
         const providerName = args.provider || 'anthropic';
@@ -48,8 +48,9 @@ export async function executeGenerate(
         });
         
         const generationContext = {
+            planName: 'Generated Plan',
             description: args.description,
-            targetSteps: args.steps,
+            stepCount: args.steps,
         };
         
         const result = await generatePlan(generationContext, provider, {

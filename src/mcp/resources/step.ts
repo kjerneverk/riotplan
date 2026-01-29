@@ -17,15 +17,15 @@ export async function readStepResource(path: string, stepNumber: number): Promis
         }
 
         // Read step file content
-        const stepFilePath = join(plan.path, 'plan', step.file);
+        const stepFilePath = join(plan.metadata.path, 'plan', step.filename);
         const content = readFileSync(stepFilePath, 'utf-8');
 
         return {
-            planPath: plan.path,
+            planPath: plan.metadata.path,
             number: step.number,
             title: step.title,
             status: step.status,
-            file: step.file,
+            file: step.filename,
             content,
         };
     } catch (error) {

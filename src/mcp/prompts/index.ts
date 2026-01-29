@@ -59,9 +59,57 @@ function fillTemplate(template: string, args: Record<string, string>): string {
 export function getPrompts(): McpPrompt[] {
     return [
         {
+            name: 'explore_idea',
+            description: 'Explore a new idea collaboratively without premature commitment. Capture thoughts, constraints, questions, and evidence.',
+            arguments: [
+                {
+                    name: 'code',
+                    description: 'Idea identifier (kebab-case, e.g., "real-time-notifications")',
+                    required: false,
+                },
+                {
+                    name: 'description',
+                    description: 'Initial concept description',
+                    required: false,
+                },
+            ],
+        },
+        {
+            name: 'shape_approach',
+            description: 'Compare different approaches and make decisions before building detailed plans. Surface tradeoffs and gather evidence.',
+            arguments: [
+                {
+                    name: 'path',
+                    description: 'Path to idea or shaping directory',
+                    required: false,
+                },
+            ],
+        },
+        {
             name: 'create_plan',
-            description: 'Create a new plan with AI-generated steps for a complex task',
-            arguments: [],
+            description: 'Create a new plan with AI-generated steps for a complex task (use after shaping)',
+            arguments: [
+                {
+                    name: 'code',
+                    description: 'Plan code/identifier (e.g., "auth-system", "dark-mode")',
+                    required: false,
+                },
+                {
+                    name: 'description',
+                    description: 'Detailed description of what you want to accomplish',
+                    required: false,
+                },
+                {
+                    name: 'directory',
+                    description: 'Parent directory where the plan should be created (e.g., "./plans")',
+                    required: false,
+                },
+                {
+                    name: 'steps',
+                    description: 'Number of steps to generate (optional, AI will determine if not specified)',
+                    required: false,
+                },
+            ],
         },
         {
             name: 'execute_step',
@@ -97,7 +145,8 @@ export async function getPrompt(
 ): Promise<McpPromptMessage[]> {
     // Validate prompt exists
     const prompts = getPrompts();
-    if (!prompts.find(p => p.name === name)) {
+    const prompt = prompts.find(p => p.name === name);
+    if (!prompt) {
         throw new Error(`Unknown prompt: ${name}`);
     }
 
@@ -106,6 +155,22 @@ export async function getPrompt(
 
     // Set default values for common arguments if missing
     const filledArgs = { ...args };
+    
+    // For explore_idea, mark missing fields
+    if (name === 'explore_idea') {
+        if (!filledArgs.code) filledArgs.code = '[idea-code]';
+        if (!filledArgs.description) filledArgs.description = '[initial concept]';
+    }
+    
+    // For create_plan, mark missing required fields
+    if (name === 'create_plan') {
+        if (!filledArgs.code) filledArgs.code = '[code]';
+        if (!filledArgs.description) filledArgs.description = '[description]';
+        if (!filledArgs.directory) filledArgs.directory = '[directory]';
+        if (!filledArgs.steps) filledArgs.steps = '[steps]';
+    }
+    
+    // For other prompts, use defaults
     if (!filledArgs.path) {
         filledArgs.path = 'current directory';
     }

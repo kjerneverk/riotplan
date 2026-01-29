@@ -1,87 +1,90 @@
 # Track Progress Workflow
 
-## Objective
+You are helping the user monitor plan progress, identify blockers, and maintain accurate status tracking throughout plan execution.
 
-Monitor plan progress, identify blockers, and maintain accurate status tracking throughout plan execution.
+## Your Task
 
-## Prerequisites
+Follow this workflow to track progress using the riotplan MCP tools and resources available to you.
 
-**Status Resource**: `riotplan://status/${path}`
-- Current plan state and progress
+## Step 1: Check Overall Status
+
+Use the `riotplan_status` tool to see high-level progress:
+
+```
+{
+  "path": "${path}",
+  "verbose": false
+}
+```
+
+This shows:
+- Completion percentage
+- Current step number
 - Active blockers and issues
-- Step completion status
+- Overall plan state
 
-**Steps Resource**: `riotplan://steps/${path}`
+Report this information to the user in a clear, concise format.
+
+## Step 2: Review Step Progress
+
+Use the `riotplan_step_list` tool to see all steps:
+
+```
+{
+  "path": "${path}",
+  "pending": false,
+  "all": true
+}
+```
+
+Or to see only remaining work:
+
+```
+{
+  "path": "${path}",
+  "pending": true
+}
+```
+
+This provides:
 - List of all steps with status
+- Which steps are completed, in progress, or pending
 - Step dependencies and ordering
 
-## Workflow Steps
+Present this information to the user, highlighting:
+- Completed steps (✅)
+- Current step (🔄)
+- Pending steps (⬜)
+- Any blocked steps (⏸️)
 
-1. **Check Overall Status**
-   - Run `riotplan_status` to see high-level progress
-   - Review completion percentage
-   - Identify current step
+## Step 3: Identify Issues
 
-2. **Review Step Progress**
-   - Run `riotplan_step_list` to see all steps
-   - Filter with `pending: true` to see remaining work
-   - Check for any blocked steps
+Look for:
+- Blockers in the status output
+- Steps taking longer than expected
+- Any issues or notes in STATUS.md
 
-3. **Identify Issues**
-   - Look for blockers in status output
-   - Check for steps that are taking longer than expected
-   - Review any issues or notes
+Inform the user about any problems found and suggest actions.
 
-4. **Update Status**
-   - Mark steps as started when beginning work
-   - Mark steps as completed when done
-   - Add notes about blockers or issues
+## Step 4: Suggest Actions
 
-5. **Adjust Plan if Needed**
-   - Add new steps if requirements emerge
-   - Split large steps into smaller ones
-   - Update step content if approach changes
+Based on the progress review, suggest to the user:
+- Which step to work on next
+- Whether any steps need to be added or split
+- If any blockers need to be addressed
+- Whether the plan needs adjustment
 
-## Example Tracking Session
+## Important Guidelines
 
-```
-# Get overall status
-riotplan_status({ path: "./my-feature" })
-→ 45% complete (5/11 steps)
-→ Current: step 6
-→ Blockers: None
-→ Issues: 1 (low priority)
-
-# List all steps
-riotplan_step_list({ path: "./my-feature" })
-→ ✅ 01 analysis
-→ ✅ 02 design
-→ ✅ 03 architecture
-→ ✅ 04 implementation-core
-→ ✅ 05 implementation-api
-→ 🔄 06 testing
-→ ⬜ 07 documentation
-→ ⬜ 08 deployment-prep
-→ ⬜ 09 staging-deploy
-→ ⬜ 10 validation
-→ ⬜ 11 production-deploy
-
-# List only pending steps
-riotplan_step_list({ path: "./my-feature", pending: true })
-→ ⬜ 07 documentation
-→ ⬜ 08 deployment-prep
-→ ⬜ 09 staging-deploy
-→ ⬜ 10 validation
-→ ⬜ 11 production-deploy
-
-# Verbose status with step details
-riotplan_status({ path: "./my-feature", verbose: true })
-→ Includes timestamps for each step
-→ Shows when steps were started/completed
-→ Provides detailed blocker information
-```
+- **Always use MCP tools** - Never shell out to CLI commands
+- **Be clear and concise** - Present status information in an easy-to-understand format
+- **Highlight issues** - Call attention to blockers or problems
+- **Suggest next steps** - Help the user understand what to do next
+- **Use resources** - Fetch status and steps resources for detailed information
 
 ## Status Indicators
+
+When presenting status to the user, use these indicators:
 
 | Symbol | Status | Meaning |
 |--------|--------|---------|
@@ -92,127 +95,51 @@ riotplan_status({ path: "./my-feature", verbose: true })
 | ⏸️ | Blocked | Waiting on dependency or external factor |
 | ⏭️ | Skipped | Intentionally skipped |
 
-## Monitoring Best Practices
+## Handling Blockers
 
-### Daily Check-In
-```
-# Morning: Check status and plan the day
-riotplan_status({ path: "./current-plan" })
-riotplan_step_list({ path: "./current-plan", pending: true })
+When you identify a blocker:
 
-# Identify today's work
-# Start the step
-riotplan_step_start({ step: N })
-
-# Evening: Update status
-riotplan_step_complete({ step: N })
-# or document blockers if incomplete
-```
-
-### Weekly Review
-```
-# Check overall progress
-riotplan_status({ path: "./current-plan", verbose: true })
-
-# Review all steps
-riotplan_step_list({ path: "./current-plan", all: true })
-
-# Assess:
-# - Are we on track?
-# - Any blockers to address?
-# - Need to adjust the plan?
-# - Add/remove steps?
-```
-
-### Handling Blockers
-
-When a blocker is identified:
-
-1. **Document It**
-   - Add to STATUS.md blockers section
-   - Include details about what's blocking progress
+1. **Inform the User**
+   - Clearly explain what's blocking progress
    - Note any dependencies or external factors
+   - Assess the impact on the overall plan
 
-2. **Assess Impact**
+2. **Suggest Actions**
    - Can other steps proceed in parallel?
-   - How critical is this blocker?
    - What's needed to unblock?
+   - Should the plan be adjusted?
 
-3. **Take Action**
-   - If waiting on external dependency, work on other steps
-   - If technical blocker, investigate and resolve
-   - If scope issue, adjust plan accordingly
+3. **Document It**
+   - Help the user document the blocker in STATUS.md
+   - Track when it was identified and what's needed to resolve it
 
-4. **Update When Resolved**
-   - Remove from blockers list
-   - Resume the blocked step
-   - Update status to reflect resolution
+## Adjusting Plans
 
-## Progress Reporting
-
-### For Stakeholders
-```
-riotplan_status({ path: "./project", verbose: true })
-
-Extract key metrics:
-- Completion percentage
-- Steps completed vs. total
-- Current phase/step
-- Estimated remaining work
-- Any blockers or risks
-```
-
-### For Team Coordination
-```
-# Share current status
-riotplan_status({ path: "./shared-project" })
-
-# Identify parallel work opportunities
-riotplan_step_list({ path: "./shared-project", pending: true })
-
-# Coordinate who works on what
-# Update as team members complete steps
-```
-
-## Adjusting Plans Mid-Flight
+If requirements emerge or steps need adjustment:
 
 ### Adding Steps
-```
-# Discovered new requirement during step 5
-riotplan_step_add({
-  path: "./my-plan",
-  title: "Security Audit",
-  after: 5
-})
+Suggest using `riotplan_step_add`:
 
-# Steps are renumbered automatically
-# Continue with updated plan
+```
+{
+  "path": "${path}",
+  "title": "New Step Title",
+  "after": 5
+}
 ```
 
-### Splitting Steps
-```
-# Step 7 is too large
-riotplan_step_add({
-  path: "./my-plan",
-  title: "Integration Tests - Unit",
-  after: 6
-})
+### Splitting Large Steps
+If a step is too complex, suggest breaking it into smaller steps using `riotplan_step_add`.
 
-riotplan_step_add({
-  path: "./my-plan",
-  title: "Integration Tests - E2E",
-  after: 7
-})
+## Example Workflow
 
-# Original step 7 can be updated or removed
-```
+Here's how you should execute this workflow:
 
-## Tips
+1. Call `riotplan_status` with path: "${path}"
+2. Present the status to the user clearly
+3. Call `riotplan_step_list` to show all steps
+4. Identify any issues or blockers
+5. Suggest next actions to the user
+6. If the user wants to adjust the plan, use `riotplan_step_add` or other tools
 
-- **Check Status Frequently**: Quick status checks keep you oriented
-- **Update Promptly**: Mark steps as started/completed as they happen
-- **Document Blockers**: Don't let blockers go unrecorded
-- **Be Honest**: Accurate status is more valuable than optimistic status
-- **Adjust Freely**: Plans should evolve as you learn more
-- **Use Verbose Mode**: When you need details, verbose output helps
-- **Filter Wisely**: Use `pending` filter to focus on remaining work
+Remember: Always use MCP tools, never shell commands.

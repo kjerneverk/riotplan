@@ -22,7 +22,7 @@ export async function readPlanResource(path: string): Promise<PlanResource> {
         const plan = await loadPlan(path);
         
         return {
-            path: plan.path,
+            path: plan.metadata.path,
             code: plan.metadata.code,
             name: plan.metadata.name,
             exists: true,
@@ -30,14 +30,14 @@ export async function readPlanResource(path: string): Promise<PlanResource> {
                 code: plan.metadata.code,
                 name: plan.metadata.name,
                 description: plan.metadata.description,
-                created: plan.metadata.created,
+                created: plan.metadata.createdAt,
             },
             state: {
                 status: plan.state.status,
                 currentStep: plan.state.currentStep,
-                lastCompleted: plan.state.lastCompleted,
+                lastCompleted: plan.state.lastCompletedStep,
                 startedAt: plan.state.startedAt,
-                lastUpdated: plan.state.lastUpdated,
+                lastUpdated: plan.state.lastUpdatedAt,
             },
         };
     } catch (error) {

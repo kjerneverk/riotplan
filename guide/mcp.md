@@ -1,0 +1,365 @@
+# MCP Server Integration
+
+RiotPlan provides a Model Context Protocol (MCP) server that allows AI assistants to manage long-lived, stateful workflows directly.
+
+## Overview
+
+The MCP server exposes riotplan's functionality through:
+- **Tools** - Callable functions for plan management
+- **Resources** - Read-only access to plan data
+- **Prompts** - Workflow templates for common tasks
+
+## Installation
+
+### Global Installation
+
+```bash
+npm install -g @riotprompt/riotplan
+```
+
+### Cursor Configuration
+
+Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "riotplan": {
+      "command": "npx",
+      "args": ["-y", "@riotprompt/riotplan", "riotplan-mcp"]
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+{
+  "mcpServers": {
+    "riotplan": {
+      "command": "riotplan-mcp"
+    }
+  }
+}
+```
+
+## Tools
+
+### Plan Management
+
+#### `riotplan_create`
+
+Create a new plan with AI-generated steps.
+
+**Parameters:**
+- `code` (required) - Plan identifier (e.g., "auth-system")
+- `description` (required) - What you want to accomplish
+- `name` (optional) - Human-readable name
+- `directory` (optional) - Parent directory
+- `steps` (optional) - Number of steps to generate
+- `direct` (optional) - Skip analysis phase
+- `provider` (optional) - AI provider (anthropic, openai, gemini)
+- `model` (optional) - Specific model
+- `noAi` (optional) - Use templates only
+
+**Example:**
+```typescript
+riotplan_create({
+  code: "user-auth",
+  description: "Implement user authentication with JWT tokens",
+  steps: 6,
+  provider: "anthropic"
+})
+```
+
+#### `riotplan_status`
+
+Show current plan status and progress.
+
+**Parameters:**
+- `path` (optional) - Plan directory
+- `verbose` (optional) - Include step details
+
+**Returns:**
+- Plan status (pending, in_progress, completed)
+- Progress percentage
+- Current step
+- Blockers and issues
+
+#### `riotplan_validate`
+
+Validate plan structure and files.
+
+**Parameters:**
+- `path` (optional) - Plan directory
+- `fix` (optional) - Attempt to fix issues
+
+**Checks:**
+- Required files exist
+- STATUS.md is valid
+- Step numbering is correct
+- No circular dependencies
+
+#### `riotplan_generate`
+
+Generate plan content using AI.
+
+**Parameters:**
+- `description` (required) - Plan requirements
+- `steps` (optional) - Number of steps
+- `provider` (optional) - AI provider
+- `model` (optional) - Specific model
+
+### Step Management
+
+#### `riotplan_step_list`
+
+List all steps in a plan.
+
+**Parameters:**
+- `path` (optional) - Plan directory
+- `pending` (optional) - Show only pending steps
+- `all` (optional) - Include completed steps
+
+**Returns:**
+Array of steps with number, title, status, and file.
+
+#### `riotplan_step_start`
+
+Mark a step as started.
+
+**Parameters:**
+- `path` (optional) - Plan directory
+- `step` (required) - Step number
+
+Updates STATUS.md to reflect in-progress status.
+
+#### `riotplan_step_complete`
+
+Mark a step as completed.
+
+**Parameters:**
+- `path` (optional) - Plan directory
+- `step` (required) - Step number
+
+Updates STATUS.md and advances to next step.
+
+#### `riotplan_step_add`
+
+Add a new step to the plan.
+
+**Parameters:**
+- `path` (optional) - Plan directory
+- `title` (required) - Step title
+- `number` (optional) - Position to insert
+- `after` (optional) - Insert after this step
+
+## Resources
+
+Resources provide read-only access to plan data.
+
+### `riotplan://plan/{path}`
+
+Plan metadata and structure.
+
+**Returns:**
+- Plan code and name
+- Metadata (created date, author, etc.)
+- Current state
+
+### `riotplan://status/{path}`
+
+Current status and progress.
+
+**Returns:**
+- Status (pending, in_progress, completed)
+- Current step number
+- Progress (completed/total/percentage)
+- Blockers and issues
+
+### `riotplan://steps/{path}`
+
+List of all steps.
+
+**Returns:**
+Array of steps with number, title, status, and filename.
+
+### `riotplan://step/{path}?number={n}`
+
+Specific step with full content.
+
+**Returns:**
+- Step metadata
+- Full step content (markdown)
+- Acceptance criteria
+- Testing requirements
+
+## Prompts
+
+Workflow templates for common tasks.
+
+### `create_plan`
+
+Guided workflow for creating a new plan with AI-generated steps.
+
+**Use when:** Starting a new complex task or feature.
+
+**Workflow:**
+1. Define plan details
+2. Create with AI generation
+3. Review generated plan
+4. Validate structure
+5. Begin execution
+
+### `execute_step`
+
+Workflow for executing a single step with proper status tracking.
+
+**Use when:** Working through plan steps.
+
+**Workflow:**
+1. Check plan status
+2. Read step details
+3. Mark step as started
+4. Execute tasks
+5. Verify completion
+6. Mark step as complete
+
+### `track_progress`
+
+Workflow for monitoring plan progress and maintaining status.
+
+**Use when:** Checking progress or reviewing plan state.
+
+**Workflow:**
+1. Check overall status
+2. Review step progress
+3. Identify issues
+4. Update status
+5. Adjust plan if needed
+
+## AI Provider Configuration
+
+For AI-powered plan generation, set your API key:
+
+```bash
+# Anthropic (recommended)
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# OpenAI
+export OPENAI_API_KEY="sk-..."
+
+# Google Gemini
+export GOOGLE_API_KEY="..."
+```
+
+Install the corresponding execution package:
+
+```bash
+npm install -g @riotprompt/execution-anthropic
+# or
+npm install -g @riotprompt/execution-openai
+# or
+npm install -g @riotprompt/execution-gemini
+```
+
+## Usage Patterns
+
+### Creating and Executing a Plan
+
+```typescript
+// 1. Create plan
+riotplan_create({
+  code: "feature-x",
+  description: "Implement feature X with tests and docs",
+  steps: 8
+})
+
+// 2. Check status
+riotplan_status({ path: "./feature-x" })
+
+// 3. Start first step
+riotplan_step_start({ path: "./feature-x", step: 1 })
+
+// 4. Read step content
+fetch("riotplan://step/feature-x?number=1")
+
+// 5. Complete step
+riotplan_step_complete({ path: "./feature-x", step: 1 })
+
+// 6. Repeat for remaining steps
+```
+
+### Monitoring Progress
+
+```typescript
+// Quick status check
+riotplan_status({ path: "./my-plan" })
+
+// Detailed status with step info
+riotplan_status({ path: "./my-plan", verbose: true })
+
+// List pending steps
+riotplan_step_list({ path: "./my-plan", pending: true })
+```
+
+### Adapting Plans
+
+```typescript
+// Add a new step
+riotplan_step_add({
+  path: "./my-plan",
+  title: "Security Audit",
+  after: 5
+})
+
+// Validate after changes
+riotplan_validate({ path: "./my-plan" })
+```
+
+## Benefits
+
+### For AI Assistants
+
+- **Structured Workflows** - Break complex tasks into manageable steps
+- **State Persistence** - Resume work across multiple sessions
+- **Progress Tracking** - Always know where you are
+- **Context Maintenance** - Keep track of decisions and blockers
+- **Adaptive Planning** - Add/modify steps as requirements emerge
+
+### For Users
+
+- **Transparent Progress** - See exactly what's been done
+- **Reviewable Plans** - Inspect and adjust AI-generated plans
+- **Collaborative Work** - Human and AI work together
+- **Version Control Friendly** - All files are markdown
+
+## Troubleshooting
+
+### Server Not Starting
+
+Check installation:
+```bash
+which riotplan-mcp
+# or
+npx @riotprompt/riotplan riotplan-mcp --help
+```
+
+### Tools Not Available
+
+Verify MCP configuration in Cursor settings and restart the IDE.
+
+### AI Provider Errors
+
+Ensure API keys are set and execution packages are installed:
+```bash
+echo $ANTHROPIC_API_KEY
+npm list -g @riotprompt/execution-anthropic
+```
+
+## See Also
+
+- [Usage Guide](./usage.md) - CLI usage
+- [Index](./index.md) - Guide overview
+- [README](../README.md#mcp-integration) - Quick MCP setup

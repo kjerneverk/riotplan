@@ -82,7 +82,7 @@ export async function executeCreate(
             {
                 planPath: result.path,
                 code: args.code,
-                stepsCreated: result.steps?.length || 0,
+                stepsCreated: result.plan.steps?.length || 0,
                 filesCreated: result.filesCreated || [],
             },
             `Plan "${args.code}" created successfully at ${result.path}`

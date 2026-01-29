@@ -14,17 +14,21 @@ export async function readStatusResource(path: string): Promise<StatusResource> 
         const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
         return {
-            planPath: plan.path,
+            planPath: plan.metadata.path,
             status: plan.state.status,
             currentStep: plan.state.currentStep,
-            lastCompleted: plan.state.lastCompleted,
+            lastCompleted: plan.state.lastCompletedStep,
             progress: {
                 completed,
                 total,
                 percentage,
             },
-            blockers: plan.state.blockers || [],
-            issues: plan.state.issues || [],
+            blockers: (plan.state.blockers || []).map(b => 
+                typeof b === 'string' ? b : `${b.severity}: ${b.description}`
+            ),
+            issues: (plan.state.issues || []).map(i => 
+                typeof i === 'string' ? i : `${i.severity}: ${i.description}`
+            ),
         };
     } catch (error) {
         throw new Error(`Failed to read status at ${path}: ${error}`);

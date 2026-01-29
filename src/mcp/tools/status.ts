@@ -39,13 +39,13 @@ export async function executeStatus(
         const total = plan.steps.length;
         const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-        const statusData = {
-            planPath: plan.path,
+        const statusData: any = {
+            planPath: plan.metadata.path,
             code: plan.metadata.code,
             name: plan.metadata.name,
             status: plan.state.status,
             currentStep: plan.state.currentStep,
-            lastCompleted: plan.state.lastCompleted,
+            lastCompleted: plan.state.lastCompletedStep,
             progress: {
                 completed,
                 total,
@@ -54,7 +54,7 @@ export async function executeStatus(
             blockers: plan.state.blockers || [],
             issues: plan.state.issues || [],
             startedAt: plan.state.startedAt,
-            lastUpdated: plan.state.lastUpdated,
+            lastUpdated: plan.state.lastUpdatedAt,
         };
 
         if (args.verbose) {

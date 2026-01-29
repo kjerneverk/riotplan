@@ -2,33 +2,43 @@
  * Shared utilities for MCP tools
  */
 
-import type { ToolExecutionContext, ToolResult } from '../types.js';
 import { resolve } from 'node:path';
+import type { ToolResult, ToolExecutionContext } from '../types.js';
 
-/**
- * Helper to resolve directory path
- */
-export function resolveDirectory(args: any, context: ToolExecutionContext): string {
-    return args.directory ? resolve(args.directory) : context.workingDirectory;
+export function formatTimestamp(): string {
+    return new Date().toISOString();
+}
+
+export function formatDate(): string {
+    return new Date().toISOString().split('T')[0];
 }
 
 /**
- * Helper to format errors for MCP
+ * Resolve directory from args or context
  */
-export function formatError(error: any): ToolResult {
+export function resolveDirectory(args: any, context: ToolExecutionContext): string {
+    if (args.path) {
+        return resolve(args.path);
+    }
+    if (context.workingDirectory) {
+        return context.workingDirectory;
+    }
+    return process.cwd();
+}
+
+/**
+ * Format error as ToolResult
+ */
+export function formatError(error: unknown): ToolResult {
     const message = error instanceof Error ? error.message : String(error);
-    
     return {
         success: false,
         error: message,
-        context: {
-            errorType: error?.constructor?.name || 'Error',
-        },
     };
 }
 
 /**
- * Helper to create success result
+ * Create success ToolResult
  */
 export function createSuccess(data: any, message?: string): ToolResult {
     return {
@@ -36,26 +46,4 @@ export function createSuccess(data: any, message?: string): ToolResult {
         data,
         message,
     };
-}
-
-/**
- * Helper to send progress notification
- */
-export async function sendProgress(
-    context: ToolExecutionContext,
-    progress: number,
-    total: number,
-    message: string
-): Promise<void> {
-    if (context.sendNotification && context.progressToken) {
-        await context.sendNotification({
-            method: 'notifications/progress',
-            params: {
-                progressToken: context.progressToken,
-                progress,
-                total,
-                message,
-            },
-        });
-    }
 }

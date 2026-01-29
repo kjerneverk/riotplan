@@ -21,6 +21,46 @@ import {
 } from './step.js';
 import { validateTool, executeValidate } from './validate.js';
 import { generateTool, executeGenerate } from './generate.js';
+import {
+    ideaCreateTool,
+    ideaAddNoteTool,
+    ideaAddConstraintTool,
+    ideaAddQuestionTool,
+    ideaAddEvidenceTool,
+    ideaKillTool,
+    executeIdeaCreate,
+    executeIdeaAddNote,
+    executeIdeaAddConstraint,
+    executeIdeaAddQuestion,
+    executeIdeaAddEvidence,
+    executeIdeaKill,
+} from './idea.js';
+import {
+    shapingStartTool,
+    shapingAddApproachTool,
+    shapingAddFeedbackTool,
+    shapingAddEvidenceTool,
+    shapingCompareTool,
+    shapingSelectTool,
+    executeShapingStart,
+    executeShapingAddApproach,
+    executeShapingAddFeedback,
+    executeShapingAddEvidence,
+    executeShapingCompare,
+    executeShapingSelect,
+} from './shaping.js';
+import {
+    checkpointCreateTool,
+    checkpointListTool,
+    checkpointShowTool,
+    checkpointRestoreTool,
+    historyShowTool,
+    executeCheckpointCreate,
+    executeCheckpointList,
+    executeCheckpointShow,
+    executeCheckpointRestore,
+    executeHistoryShow,
+} from './history.js';
 
 /**
  * Base tool executor - wraps command logic
@@ -49,6 +89,43 @@ export async function executeTool(
                 return await executeValidate(args, context);
             case 'riotplan_generate':
                 return await executeGenerate(args, context);
+            // Idea tools
+            case 'riotplan_idea_create':
+                return await executeIdeaCreate(args, context);
+            case 'riotplan_idea_add_note':
+                return await executeIdeaAddNote(args, context);
+            case 'riotplan_idea_add_constraint':
+                return await executeIdeaAddConstraint(args, context);
+            case 'riotplan_idea_add_question':
+                return await executeIdeaAddQuestion(args, context);
+            case 'riotplan_idea_add_evidence':
+                return await executeIdeaAddEvidence(args, context);
+            case 'riotplan_idea_kill':
+                return await executeIdeaKill(args, context);
+            // Shaping tools
+            case 'riotplan_shaping_start':
+                return await executeShapingStart(args, context);
+            case 'riotplan_shaping_add_approach':
+                return await executeShapingAddApproach(args, context);
+            case 'riotplan_shaping_add_feedback':
+                return await executeShapingAddFeedback(args, context);
+            case 'riotplan_shaping_add_evidence':
+                return await executeShapingAddEvidence(args, context);
+            case 'riotplan_shaping_compare':
+                return await executeShapingCompare(args, context);
+            case 'riotplan_shaping_select':
+                return await executeShapingSelect(args, context);
+            // History and checkpoint tools
+            case 'riotplan_checkpoint_create':
+                return await executeCheckpointCreate(args, context);
+            case 'riotplan_checkpoint_list':
+                return await executeCheckpointList(args, context);
+            case 'riotplan_checkpoint_show':
+                return await executeCheckpointShow(args, context);
+            case 'riotplan_checkpoint_restore':
+                return await executeCheckpointRestore(args, context);
+            case 'riotplan_history_show':
+                return await executeHistoryShow(args, context);
             default:
                 return {
                     success: false,
@@ -78,4 +155,24 @@ export const tools: McpTool[] = [
     stepAddTool,
     validateTool,
     generateTool,
+    // Idea tools
+    ideaCreateTool,
+    ideaAddNoteTool,
+    ideaAddConstraintTool,
+    ideaAddQuestionTool,
+    ideaAddEvidenceTool,
+    ideaKillTool,
+    // Shaping tools
+    shapingStartTool,
+    shapingAddApproachTool,
+    shapingAddFeedbackTool,
+    shapingAddEvidenceTool,
+    shapingCompareTool,
+    shapingSelectTool,
+    // History and checkpoint tools
+    checkpointCreateTool,
+    checkpointListTool,
+    checkpointShowTool,
+    checkpointRestoreTool,
+    historyShowTool,
 ];
