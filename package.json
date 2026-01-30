@@ -63,7 +63,7 @@
   "peerDependencies": {
     "@riotprompt/agentic": "^1.0.2",
     "@riotprompt/execution": "^1.0.1",
-    "@riotprompt/riotprompt": "^1.0.1"
+    "@riotprompt/riotprompt": "^1.0.4"
   },
   "peerDependenciesMeta": {
     "@riotprompt/agentic": {
