@@ -325,6 +325,18 @@ async function main() {
     );
 
     registerTool(
+        'riotplan_idea_add_narrative',
+        'Add raw narrative content to the timeline. Use this to capture conversational context, thinking-out-loud, or any free-form input that doesn\'t fit structured categories. Narrative chunks preserve full-fidelity context.',
+        {
+            content: z.string(),
+            path: z.string().optional(),
+            source: z.enum(["typing", "voice", "paste", "import"]).optional(),
+            context: z.string().optional(),
+            speaker: z.string().optional(),
+        }
+    );
+
+    registerTool(
         'riotplan_idea_kill',
         'Kill an idea. Abandon the idea with a reason, preserving the learning.',
         {

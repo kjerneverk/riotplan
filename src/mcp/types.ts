@@ -83,7 +83,24 @@ export interface McpPromptMessage {
  */
 export interface RiotplanUri {
     scheme: 'riotplan';
-    type: 'plan' | 'status' | 'steps' | 'step' | 'feedback' | 'analysis';
+    type: 
+        // Plan execution resources
+        | 'plan' 
+        | 'status' 
+        | 'steps' 
+        | 'step' 
+        | 'feedback' 
+        | 'analysis'
+        // Ideation context resources
+        | 'idea'
+        | 'timeline'
+        | 'prompts'
+        | 'prompt'
+        | 'evidence'
+        | 'evidence-file'
+        | 'shaping'
+        | 'checkpoints'
+        | 'checkpoint';
     path?: string;
     query?: Record<string, string>;
 }

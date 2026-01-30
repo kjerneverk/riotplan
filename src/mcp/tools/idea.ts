@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 import { join } from "node:path";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import { formatTimestamp } from "./shared.js";
 import { logEvent } from "./history.js";
 
@@ -311,11 +311,12 @@ export async function ideaAddEvidence(args: z.infer<typeof IdeaAddEvidenceSchema
 
 export async function ideaAddNarrative(args: z.infer<typeof IdeaAddNarrativeSchema>): Promise<string> {
     const ideaPath = args.path || process.cwd();
+    const timestamp = formatTimestamp();
   
     // Log narrative chunk to timeline (not to IDEA.md)
     // Narrative chunks are kept in the timeline for full-fidelity context
     await logEvent(ideaPath, {
-        timestamp: formatTimestamp(),
+        timestamp,
         type: 'narrative_chunk',
         data: { 
             content: args.content,
@@ -325,7 +326,51 @@ export async function ideaAddNarrative(args: z.infer<typeof IdeaAddNarrativeSche
         },
     });
   
-    return `✅ Narrative chunk added to timeline (${args.content.length} characters)`;
+    // ALSO save to .history/prompts/ directory as a numbered file
+    // This makes narratives reusable as prompts for regenerating/updating plans
+    const historyDir = join(ideaPath, ".history");
+    const promptsDir = join(historyDir, "prompts");
+    await mkdir(promptsDir, { recursive: true });
+  
+    // Find next available number
+    let files: string[] = [];
+    try {
+        files = await readdir(promptsDir);
+    } catch {
+        // Directory doesn't exist yet or is empty
+        files = [];
+    }
+  
+    const promptFiles = files
+        .filter(f => /^\d{3}-.*\.md$/.test(f))
+        .sort();
+    
+    const nextNum = promptFiles.length > 0
+        ? parseInt(promptFiles[promptFiles.length - 1].substring(0, 3)) + 1
+        : 1;
+  
+    // Generate filename from context or use generic name
+    const baseFilename = args.context
+        ? args.context.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 50)
+        : 'narrative';
+    const filename = `${String(nextNum).padStart(3, '0')}-${baseFilename}.md`;
+    const promptPath = join(promptsDir, filename);
+  
+    // Create prompt file
+    const promptContent = `# Narrative: ${args.context || 'User Input'}
+
+**Date**: ${timestamp}
+**Source**: ${args.source || 'unknown'}
+**Speaker**: ${args.speaker || 'user'}
+
+---
+
+${args.content}
+`;
+  
+    await writeFile(promptPath, promptContent, "utf-8");
+  
+    return `✅ Narrative saved to timeline and ${filename} (${args.content.length} characters)`;
 }
 
 export async function ideaKill(args: z.infer<typeof IdeaKillSchema>): Promise<string> {

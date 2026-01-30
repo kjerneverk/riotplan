@@ -35,7 +35,23 @@ Ask open-ended questions:
 - "What questions need answering?"
 - "Do you have any evidence (docs, diagrams, examples)?"
 
-As the user responds, capture their thinking:
+As the user responds, capture their thinking in TWO ways:
+
+**FIRST: Capture the full narrative (preserve the raw conversation)**
+
+When the user provides detailed responses, especially voice transcriptions or long explanations, capture the FULL TEXT as narrative:
+
+```
+riotplan_idea_add_narrative({
+  content: "[User's complete response, verbatim or paraphrased if spoken]",
+  source: "voice",  // or "typing", "paste", "import"
+  context: "User explaining document type requirements"
+})
+```
+
+**THEN: Extract structured information**
+
+After capturing the narrative, extract key points into structured categories:
 
 **For thoughts/notes:**
 ```
@@ -65,6 +81,11 @@ riotplan_idea_add_evidence({
   description: "Architecture diagram showing current state"
 })
 ```
+
+**Why Both?**
+- Narrative preserves full context and nuance
+- Structured data makes information actionable
+- Timeline shows both the conversation and the decisions
 
 ### 3. Decide Next Steps
 
@@ -105,15 +126,29 @@ Just leave it in idea stage. Can return later.
 
 **AI**: "What's driving this? What problem does it solve?"
 
-**User**: "Users miss important updates. They have to refresh constantly."
+**User**: "Users miss important updates. They have to refresh constantly. It's frustrating for them and we're getting complaints. I think we need some kind of push notification system but I'm not sure if it should be in-app only or also email."
 
-*Adds note*
+*Captures narrative first:*
+```
+riotplan_idea_add_narrative({
+  content: "Users miss important updates. They have to refresh constantly. It's frustrating for them and we're getting complaints. I think we need some kind of push notification system but I'm not sure if it should be in-app only or also email.",
+  source: "typing",
+  context: "User explaining the problem driving this idea"
+})
+```
+
+*Then adds structured note:*
+```
+riotplan_idea_add_note({
+  note: "Problem: Users missing updates, forced to refresh manually. Considering push notifications (in-app vs email unclear)"
+})
+```
 
 **AI**: "What constraints should we consider?"
 
-**User**: "Must work on mobile. Can't require WebSockets everywhere."
+**User**: "Must work on mobile. Can't require WebSockets everywhere. Also need to keep costs reasonable."
 
-*Adds constraints*
+*Captures narrative and extracts constraints*
 
 **AI**: "Good constraints. Any questions we need to answer?"
 
