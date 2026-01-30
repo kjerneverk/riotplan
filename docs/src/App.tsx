@@ -96,6 +96,34 @@ const DOC_SECTIONS = [
         category: 'api'
     },
     {
+        id: 'mcp-overview',
+        title: 'MCP Overview',
+        file: 'mcp-overview.md',
+        description: 'Model Context Protocol integration',
+        category: 'mcp'
+    },
+    {
+        id: 'mcp-tools',
+        title: 'MCP Tools',
+        file: 'mcp-tools.md',
+        description: 'All available MCP tools',
+        category: 'mcp'
+    },
+    {
+        id: 'mcp-resources',
+        title: 'MCP Resources',
+        file: 'mcp-resources.md',
+        description: 'Read-only data access',
+        category: 'mcp'
+    },
+    {
+        id: 'mcp-prompts',
+        title: 'MCP Prompts',
+        file: 'mcp-prompts.md',
+        description: 'Workflow templates',
+        category: 'mcp'
+    },
+    {
         id: 'credits',
         title: 'Credits',
         file: 'credits.md',

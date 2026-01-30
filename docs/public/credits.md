@@ -4,13 +4,13 @@ The design of this documentation site is based on the **Zerofour** template by [
 
 ### Design & Assets
 *   **Original Design:** [Zerofour](https://html5up.net/zerofour) (CC BY 3.0)
-*   **Header Image:** [Dramatic Alpine scenery](https://commons.wikimedia.org/wiki/File:Dramatic_Alpine_scenery_(Unsplash).jpg) by Sam Ferrara (CC0 Public Domain)
+*   **Header Image:** [Snowy mountain range](https://commons.wikimedia.org/wiki/File:Snowy_mountain_range.jpg) by MonikaP (CC0 Public Domain)
 
-We have adapted the clean, boxy aesthetic and typography to create a focused reading experience for the RiotPrompt documentation.
+We have adapted the clean, boxy aesthetic and typography to create a focused reading experience for the RiotPlan documentation.
 
 ---
 
-RiotPrompt itself is built and maintained by [Tim O'Brien](https://github.com/tobrien).
+RiotPlan itself is built and maintained by [Tim O'Brien](https://github.com/tobrien).
 
 ---
 

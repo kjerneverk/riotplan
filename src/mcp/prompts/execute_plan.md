@@ -1,0 +1,456 @@
+# Execute Plan
+
+## Purpose
+
+Guide intelligent, high-level plan execution with automatic state management. This prompt provides a conversational workflow for executing plans, automatically determining which step to work on, guiding through tasks, and managing execution state.
+
+## When to Use
+
+- User wants to execute a plan ("let's execute this plan", "start working on this")
+- Continuing execution of a partially completed plan
+- Resuming after a break
+- Need guided, conversational execution experience
+
+## Workflow
+
+### 1. Check Plan Status
+
+**Always start by checking current execution state:**
+
+```typescript
+riotplan_status({
+  path: "./path/to/plan"
+})
+```
+
+Analyze the response to understand:
+- Total number of steps
+- How many steps are complete
+- Which step (if any) is currently in progress
+- Which step should be started next
+- Any blockers or issues
+- Overall progress percentage
+
+### 2. Determine Next Action
+
+Based on the status, determine what to do:
+
+#### Scenario A: No Steps Started
+
+```
+Status: ⬜ PLANNING
+Current Step: Ready to begin Step 01
+Progress: 0% (0/N steps)
+```
+
+**Your Response:**
+"This plan has [N] steps and hasn't been started yet. Let's begin with Step 01: [title].
+
+[Brief description of what Step 01 accomplishes]
+
+The main tasks are:
+1. [Task 1]
+2. [Task 2]
+3. [Task 3]
+
+Ready to start?"
+
+#### Scenario B: Step In Progress
+
+```
+Status: 🔄 IN_PROGRESS
+Current Step: Step [N] in progress
+Progress: X% (N-1/Total steps)
+```
+
+**Your Response:**
+"We're currently working on Step [N]: [title].
+
+Let me check what we've done so far..."
+
+*Read the step file and STATUS.md to understand progress*
+
+"It looks like we've completed [X, Y, Z]. What would you like to work on next?"
+
+#### Scenario C: Step Complete, Next Step Pending
+
+```
+Status: 🔄 IN_PROGRESS
+Current Step: Ready to begin Step [N+1]
+Last Completed: Step [N]
+Progress: X% (N/Total steps)
+```
+
+**Your Response:**
+"Great! Step [N] is complete. We're [X]% through the plan.
+
+Ready to move to Step [N+1]: [title]?
+
+[Brief description of what this step accomplishes]"
+
+#### Scenario D: All Steps Complete
+
+```
+Status: ✅ COMPLETED
+Progress: 100% (N/N steps)
+```
+
+**Your Response:**
+"Congratulations! All [N] steps are complete. The plan has been fully executed.
+
+[Summary of what was accomplished]
+
+Would you like to review the results or is there anything else you'd like to do with this plan?"
+
+### 3. Execute Current Step
+
+When working on a step:
+
+#### 3.1 Start the Step
+
+Mark the step as started:
+```typescript
+riotplan_step_start({
+  path: "./path/to/plan",
+  step: N
+})
+```
+
+#### 3.2 Read Step Details
+
+Read the step file to understand what needs to be done:
+```typescript
+// Read the step file
+```
+
+Understand:
+- **Objective**: What this step accomplishes
+- **Tasks**: Specific things to do
+- **Acceptance Criteria**: How to know it's done
+- **Files Changed**: What will be modified
+- **Notes**: Important considerations
+
+#### 3.3 Guide Through Tasks
+
+Work through each task conversationally:
+
+1. **Explain what you're about to do**: "Let me [task description]"
+2. **Do the work**: Make code changes, create files, run commands
+3. **Show what you did**: "I've [what was done]"
+4. **Confirm**: "Does this look right?"
+
+Be conversational - this is pair programming, not automation.
+
+#### 3.4 Check Acceptance Criteria
+
+Before completing the step, verify acceptance criteria:
+
+"Let me check the acceptance criteria:
+- ✅ [Criterion 1] - Done
+- ✅ [Criterion 2] - Done
+- ⬜ [Criterion 3] - Still need to do this
+
+Let me complete [Criterion 3]..."
+
+#### 3.5 Complete the Step
+
+When all tasks and criteria are met:
+
+```typescript
+riotplan_step_complete({
+  path: "./path/to/plan",
+  step: N
+})
+```
+
+Confirm completion:
+"Step [N] is complete! [Brief summary of what was accomplished]"
+
+### 4. Handle Blockers and Issues
+
+If you encounter a blocker:
+
+1. **Acknowledge it**: "I've hit a blocker: [description]"
+2. **Capture it**: Add narrative about the blocker
+3. **Discuss**: "Here are some options: [A, B, C]. What would you like to do?"
+4. **Resolve or defer**: Either fix it now or document it and move on
+
+If the plan needs adjustment:
+- Suggest creating a checkpoint before making changes
+- Use the `develop_plan` prompt to refine the plan
+- Resume execution after refinement
+
+### 5. Create Checkpoints at Key Moments
+
+Create checkpoints during execution:
+
+**Before risky changes:**
+```typescript
+riotplan_checkpoint_create({
+  path: "./path/to/plan",
+  name: "before-step-5",
+  message: "Checkpoint before implementing database migration (Step 5)"
+})
+```
+
+**After completing major phases:**
+```typescript
+riotplan_checkpoint_create({
+  path: "./path/to/plan",
+  name: "phase-1-complete",
+  message: "Completed Phase 1: Data model and core types (Steps 1-4)"
+})
+```
+
+**When user wants to pause:**
+```typescript
+riotplan_checkpoint_create({
+  path: "./path/to/plan",
+  name: "pause-after-step-7",
+  message: "Pausing execution after Step 7. Ready to resume with Step 8."
+})
+```
+
+### 6. Capture Narrative During Execution
+
+As you work, capture the narrative of execution:
+
+**When starting a step:**
+```typescript
+riotplan_idea_add_narrative({
+  path: "./path/to/plan",
+  content: "Starting Step 3: Implement Narrative Capture. The objective is to create MCP tool for capturing raw conversational input. This builds on the timeline extensions from Step 2.",
+  speaker: "assistant",
+  context: "Beginning step execution"
+})
+```
+
+**When encountering challenges:**
+```typescript
+riotplan_idea_add_narrative({
+  path: "./path/to/plan",
+  content: "Ran into an issue with the timeline event types - the NarrativeChunkEvent interface wasn't exported. Fixed by adding export to types.ts. This is a common pattern we should watch for in future steps.",
+  speaker: "assistant",
+  context: "Problem solving during execution"
+})
+```
+
+**When making decisions:**
+```typescript
+riotplan_idea_add_narrative({
+  path: "./path/to/plan",
+  content: "Decided to store inline evidence in .history/evidence/ rather than embedding in timeline. This keeps the timeline lean and makes evidence files easier to browse. User can view evidence directly as markdown files.",
+  speaker: "assistant",
+  context: "Implementation decision"
+})
+```
+
+### 7. Iterate Until Complete
+
+Continue the execution loop:
+1. Check status
+2. Determine next step
+3. Execute step
+4. Mark complete
+5. Move to next step
+6. Repeat
+
+## Key Principles
+
+### 1. Intelligent State Management
+
+**Always check status first** - never assume where you are in execution:
+```typescript
+// Start every interaction with status check
+riotplan_status({ path: "./path/to/plan" })
+```
+
+### 2. Conversational Execution
+
+This is **pair programming**, not automation:
+- Explain what you're doing
+- Show your work
+- Ask for confirmation when needed
+- Discuss trade-offs and decisions
+- Make it feel collaborative
+
+### 3. Guided Experience
+
+**Lead the user** through execution:
+- "Let's start with..."
+- "Next, we need to..."
+- "I'll [do X], then [do Y]"
+- "Ready to move to the next step?"
+
+### 4. Flexible and Resumable
+
+**Handle interruptions gracefully:**
+- User can pause at any time
+- Checkpoints preserve state
+- Status shows exactly where you are
+- Easy to resume later
+
+### 5. Context-Aware
+
+**Remember what's been done:**
+- Read STATUS.md to see progress
+- Check completed steps
+- Understand dependencies
+- Don't repeat work
+
+## Example Execution Session
+
+### Initial Start
+
+**User**: "Let's execute this plan"
+
+**AI**: *Checks status*
+```typescript
+riotplan_status({ path: "./plans/narrative-evolution" })
+```
+
+**AI**: "This plan has 13 steps for implementing Narrative Evolution with Checkpoints and Evidence. No steps have been started yet.
+
+Let's begin with Step 01: Design Data Model. The objective is to define timeline event types for narrative chunks and checkpoints.
+
+The main tasks are:
+1. Define narrative_chunk event type structure
+2. Define checkpoint_created event type structure
+3. Define checkpoint storage format
+4. Document event type registry
+5. Design checkpoint metadata format
+
+Ready to start?"
+
+**User**: "Yes, let's do it"
+
+**AI**: *Starts step*
+```typescript
+riotplan_step_start({ path: "./plans/narrative-evolution", step: 1 })
+```
+
+**AI**: *Reads step file and begins work*
+
+"Great! Let me start by creating the data model documentation. I'll define the narrative_chunk event type first..."
+
+*Creates docs/data-model.md with event type definitions*
+
+"I've created the data model documentation with:
+- narrative_chunk event type for capturing raw conversational input
+- checkpoint_created event type for marking stopping points
+- Checkpoint storage format in .history/checkpoints/
+- Complete event type registry
+
+Let me also add the TypeScript types to src/types.ts..."
+
+*Updates types.ts*
+
+"Done! I've added all the type definitions. Let me verify the acceptance criteria:
+- ✅ Event type structures defined with TypeScript types
+- ✅ Checkpoint storage format documented
+- ✅ Design maintains backward compatibility
+- ✅ Format is simple and human-readable
+- ✅ Design supports both structured and free-form input
+- ✅ Checkpoint restoration strategy is clear
+
+All criteria met! Marking Step 01 complete."
+
+```typescript
+riotplan_step_complete({ path: "./plans/narrative-evolution", step: 1 })
+```
+
+**AI**: "Step 01 complete! We've defined the complete data model for narrative evolution.
+
+Ready to move to Step 02: Extend Timeline Format?"
+
+### Continuing Execution
+
+**User**: "Yes, continue"
+
+**AI**: *Starts Step 02*
+
+"Step 02 focuses on implementing support for narrative_chunk events in the timeline. Let me read the step details..."
+
+*Continues execution*
+
+### Resuming After Break
+
+**User**: "Let's continue working on this plan"
+
+**AI**: *Checks status*
+```typescript
+riotplan_status({ path: "./plans/narrative-evolution" })
+```
+
+**AI**: "Welcome back! We're currently working on Step 05: Implement Checkpoint Creation. We've completed steps 1-4 (31% progress).
+
+Step 05 is about creating the MCP tool for checkpoint creation. Let me check what's been done so far..."
+
+*Reads step file and continues from where left off*
+
+## Anti-Patterns
+
+❌ **Don't**: Ask user which step to work on - determine it from status
+✅ **Do**: Check status and automatically determine next action
+
+❌ **Don't**: Lose track of where you are in execution
+✅ **Do**: Always check status to understand current state
+
+❌ **Don't**: Skip tasks or acceptance criteria
+✅ **Do**: Work through each task and verify criteria before completing
+
+❌ **Don't**: Make changes without explaining what you're doing
+✅ **Do**: Explain, do, confirm - make it conversational
+
+❌ **Don't**: Complete steps without actually doing the work
+✅ **Do**: Implement everything specified in the step
+
+## State Transitions
+
+```
+⬜ PLANNING → 🔄 IN_PROGRESS (first step started)
+🔄 IN_PROGRESS → 🔄 IN_PROGRESS (completing steps)
+🔄 IN_PROGRESS → ✅ COMPLETED (last step completed)
+```
+
+## Integration with Other Prompts
+
+### From develop_plan to execute_plan
+
+After refining a plan:
+"The plan looks good! Ready to start executing?"
+→ Switch to execute_plan prompt
+
+### From execute_plan to develop_plan
+
+If plan needs adjustment during execution:
+"I think we need to adjust the plan. Let me create a checkpoint first..."
+→ Create checkpoint, switch to develop_plan prompt
+
+### Using checkpoints during execution
+
+Create checkpoints liberally:
+- Before risky changes
+- After completing phases
+- When pausing
+- When trying alternative approaches
+
+## Advanced: Parallel Execution
+
+For plans with independent steps:
+
+"Steps 3 and 4 are independent - we could work on them in parallel. Would you like to tackle Step 3 first, or should we do Step 4?"
+
+*User chooses*
+
+"Great! Let's work on Step [N]. We can come back to Step [M] afterward."
+
+## Notes
+
+- This prompt provides **high-level execution guidance**, not low-level task automation
+- The goal is **conversational pair programming**, not silent automation
+- **Always check status** before taking action
+- **Capture narrative** as you work - document decisions, challenges, solutions
+- **Create checkpoints** at key moments for recovery and documentation
+- **Be flexible** - handle interruptions, blockers, and plan changes gracefully
+- The timeline will show the **complete execution journey**, not just the final result
