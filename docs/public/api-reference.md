@@ -1,382 +1,544 @@
 # API Reference
 
-Complete API documentation for RiotPrompt's core interfaces and methods.
+Complete API documentation for programmatic use of RiotPlan.
 
-## Core Interfaces
+## Installation
 
-### Section<T>
+```bash
+npm install @riotprompt/riotplan
+```
 
-The main building block for organizing prompt content.
+## Core Functions
+
+### loadPlan
+
+Load an existing plan from a directory.
 
 ```typescript
-interface Section<T extends WeightedText> {
-  title: string;
-  items: (T | Section<T>)[];
-  weight?: number;
-  parameters?: Parameters;
-  
-  // Methods
-  add(item: T | Section<T> | string, options?: WeightedOptions): Section<T>;
-  append(item: T | Section<T> | string, options?: WeightedOptions): Section<T>;
-  prepend(item: T | Section<T> | string, options?: WeightedOptions): Section<T>;
-  insert(index: number, item: T | Section<T> | string, options?: WeightedOptions): Section<T>;
-  replace(index: number, item: T | Section<T> | string, options?: WeightedOptions): Section<T>;
-  remove(index: number): Section<T>;
+async function loadPlan(path: string): Promise<Plan>
+```
+
+**Parameters:**
+- `path` - Path to plan directory
+
+**Returns:** `Plan` object with metadata, state, and steps
+
+**Example:**
+
+```typescript
+import { loadPlan } from '@riotprompt/riotplan';
+
+const plan = await loadPlan('./prompts/my-feature');
+
+console.log(plan.metadata.code);     // 'my-feature'
+console.log(plan.state.status);      // 'in_progress'
+console.log(plan.state.currentStep); // 3
+console.log(plan.steps.length);      // 8
+```
+
+### createPlan
+
+Create a new plan programmatically.
+
+```typescript
+async function createPlan(options: CreatePlanOptions): Promise<Plan>
+```
+
+**Parameters:**
+
+```typescript
+interface CreatePlanOptions {
+  code: string;              // Plan identifier
+  name?: string;             // Human-readable name
+  path: string;              // Directory path
+  description: string;       // Plan description
+  steps?: StepDefinition[];  // Step definitions
+  provider?: string;         // AI provider
+  model?: string;            // AI model
 }
-```
 
-### WeightedText
-
-Base interface for all prompt content types.
-
-```typescript
-interface WeightedText {
-  text: string;
-  weight?: number;
-  parameters?: Parameters;
-}
-```
-
-### Content Types
-
-```typescript
-interface Instruction extends WeightedText {}
-interface ContentText extends WeightedText {}
-interface Context extends WeightedText {}
-interface Trait extends WeightedText {}
-```
-
-## Factory Functions
-
-### createSection<T>()
-
-Creates a new section with the specified options.
-
-```typescript
-function createSection<T extends WeightedText>(options: SectionOptions): Section<T>
-
-interface SectionOptions {
+interface StepDefinition {
   title: string;
-  weight?: number;
-  itemWeight?: number;
-  parameters?: Parameters;
+  description: string;
+  tasks?: string[];
+  acceptanceCriteria?: string[];
 }
 ```
 
 **Example:**
+
 ```typescript
-const section = createSection<Instruction>({ 
-  title: "Instructions",
-  weight: 1.0,
-  itemWeight: 0.8,
-  parameters: { role: "developer" }
+import { createPlan } from '@riotprompt/riotplan';
+
+const plan = await createPlan({
+  code: 'user-auth',
+  name: 'User Authentication',
+  path: './prompts/user-auth',
+  description: 'Implement secure user authentication',
+  steps: [
+    {
+      title: 'Requirements Analysis',
+      description: 'Gather and document requirements',
+      tasks: ['Review security requirements', 'Document use cases'],
+      acceptanceCriteria: ['All requirements documented', 'Stakeholders approved']
+    },
+    {
+      title: 'Implementation',
+      description: 'Build the authentication system'
+    }
+  ]
 });
 ```
 
-### createParameters()
+### resumePlan
 
-Creates a parameters object for placeholder substitution.
+Resume execution from current state.
 
 ```typescript
-function createParameters(params: Record<string, any>): Parameters
+async function resumePlan(
+  plan: Plan,
+  options?: ResumePlanOptions
+): Promise<ExecutionResult>
+```
+
+**Parameters:**
+
+```typescript
+interface ResumePlanOptions {
+  logger?: Logger;
+  skipFailed?: boolean;
+  executor?: StepExecutor;
+}
+```
+
+**Returns:**
+
+```typescript
+interface ExecutionResult {
+  success: boolean;
+  completedSteps: number[];
+  failedSteps: number[];
+  duration: number;
+  errors?: Error[];
+}
 ```
 
 **Example:**
+
 ```typescript
-const params = createParameters({
-  projectName: "MyApp",
-  environment: "production"
+import { loadPlan, resumePlan } from '@riotprompt/riotplan';
+
+const plan = await loadPlan('./prompts/my-feature');
+
+const result = await resumePlan(plan, {
+  logger: console,
+  skipFailed: false
+});
+
+console.log(result.success);          // true
+console.log(result.completedSteps);   // [3, 4, 5]
+console.log(result.duration);         // 12500 (ms)
+```
+
+## Step Management
+
+### startStep
+
+Mark a step as started.
+
+```typescript
+async function startStep(plan: Plan, stepNumber: number): Promise<Plan>
+```
+
+**Example:**
+
+```typescript
+import { loadPlan, startStep } from '@riotprompt/riotplan';
+
+const plan = await loadPlan('./my-feature');
+const updatedPlan = await startStep(plan, 5);
+```
+
+### completeStep
+
+Mark a step as completed.
+
+```typescript
+async function completeStep(
+  plan: Plan,
+  stepNumber: number,
+  options?: CompleteStepOptions
+): Promise<Plan>
+```
+
+**Parameters:**
+
+```typescript
+interface CompleteStepOptions {
+  notes?: string;
+  duration?: number;
+}
+```
+
+**Example:**
+
+```typescript
+import { loadPlan, completeStep } from '@riotprompt/riotplan';
+
+const plan = await loadPlan('./my-feature');
+const updatedPlan = await completeStep(plan, 5, {
+  notes: 'All endpoints working correctly'
 });
 ```
 
-## Formatter
+### addStep
 
-Converts sections into formatted prompt strings.
-
-### Formatter.create()
+Add a new step to the plan.
 
 ```typescript
-class Formatter {
-  static create(options?: FormatterOptions): Formatter
-  
-  format(section: Section<any>): string
+async function addStep(
+  plan: Plan,
+  options: AddStepOptions
+): Promise<Plan>
+```
+
+**Parameters:**
+
+```typescript
+interface AddStepOptions {
+  title: string;
+  description?: string;
+  after?: number;      // Insert after this step
+  number?: number;     // Insert at this position
+  tasks?: string[];
+  acceptanceCriteria?: string[];
+}
+```
+
+**Example:**
+
+```typescript
+import { loadPlan, addStep } from '@riotprompt/riotplan';
+
+const plan = await loadPlan('./my-feature');
+const updatedPlan = await addStep(plan, {
+  title: 'Integration Testing',
+  description: 'Test all components together',
+  after: 5,
+  tasks: ['Write integration tests', 'Run test suite'],
+  acceptanceCriteria: ['All tests pass', 'Coverage > 80%']
+});
+```
+
+## Type Definitions
+
+### Plan
+
+```typescript
+interface Plan {
+  metadata: PlanMetadata;
+  state: PlanState;
+  steps: PlanStep[];
+  files: PlanFiles;
 }
 
-interface FormatterOptions {
-  formatOptions?: {
-    areaSeparator?: "tag" | "markdown";
-    sectionSeparator?: "tag" | "markdown";
+interface PlanMetadata {
+  code: string;
+  name: string;
+  description?: string;
+  created: Date;
+  author?: string;
+}
+
+interface PlanState {
+  status: PlanStatus;
+  currentStep?: number;
+  lastCompleted?: number;
+  started?: Date;
+  lastUpdated: Date;
+  progress: number;  // Percentage (0-100)
+}
+
+type PlanStatus = 
+  | 'pending'
+  | 'in_progress'
+  | 'completed'
+  | 'blocked'
+  | 'failed';
+```
+
+### PlanStep
+
+```typescript
+interface PlanStep {
+  number: number;
+  title: string;
+  description?: string;
+  status: StepStatus;
+  file: string;
+  started?: Date;
+  completed?: Date;
+  duration?: number;
+  notes?: string;
+  dependencies?: number[];
+}
+
+type StepStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'completed'
+  | 'failed'
+  | 'blocked'
+  | 'skipped';
+```
+
+### PlanFiles
+
+```typescript
+interface PlanFiles {
+  prompt: string;           // {code}-prompt.md
+  summary: string;          // SUMMARY.md
+  executionPlan: string;    // EXECUTION_PLAN.md
+  status: string;           // STATUS.md
+  steps: string[];          // plan/XX-*.md
+  analysis?: string;        // analysis/ directory
+}
+```
+
+## Validation
+
+### validatePlan
+
+Validate plan structure and files.
+
+```typescript
+async function validatePlan(
+  path: string,
+  options?: ValidateOptions
+): Promise<ValidationResult>
+```
+
+**Parameters:**
+
+```typescript
+interface ValidateOptions {
+  fix?: boolean;  // Attempt to fix issues
+}
+```
+
+**Returns:**
+
+```typescript
+interface ValidationResult {
+  valid: boolean;
+  errors: ValidationError[];
+  warnings: ValidationWarning[];
+  fixed?: string[];
+}
+
+interface ValidationError {
+  type: string;
+  message: string;
+  file?: string;
+  line?: number;
+}
+```
+
+**Example:**
+
+```typescript
+import { validatePlan } from '@riotprompt/riotplan';
+
+const result = await validatePlan('./my-feature', { fix: true });
+
+if (!result.valid) {
+  console.error('Validation errors:', result.errors);
+}
+
+if (result.fixed) {
+  console.log('Fixed issues:', result.fixed);
+}
+```
+
+## Status Management
+
+### parseStatus
+
+Parse STATUS.md file.
+
+```typescript
+function parseStatus(content: string): PlanState
+```
+
+**Example:**
+
+```typescript
+import { parseStatus } from '@riotprompt/riotplan';
+import { readFileSync } from 'fs';
+
+const content = readFileSync('./my-feature/STATUS.md', 'utf-8');
+const state = parseStatus(content);
+
+console.log(state.status);      // 'in_progress'
+console.log(state.currentStep); // 3
+console.log(state.progress);    // 45
+```
+
+### generateStatus
+
+Generate STATUS.md content from plan state.
+
+```typescript
+function generateStatus(plan: Plan): string
+```
+
+**Example:**
+
+```typescript
+import { generateStatus } from '@riotprompt/riotplan';
+import { writeFileSync } from 'fs';
+
+const statusContent = generateStatus(plan);
+writeFileSync('./my-feature/STATUS.md', statusContent);
+```
+
+## AI Generation
+
+### generatePlanContent
+
+Generate plan content using AI.
+
+```typescript
+async function generatePlanContent(
+  description: string,
+  options: GenerateOptions
+): Promise<GeneratedPlan>
+```
+
+**Parameters:**
+
+```typescript
+interface GenerateOptions {
+  steps?: number;
+  provider?: string;
+  model?: string;
+  analysis?: string;
+}
+```
+
+**Returns:**
+
+```typescript
+interface GeneratedPlan {
+  summary: string;
+  executionPlan: string;
+  steps: GeneratedStep[];
+}
+
+interface GeneratedStep {
+  number: number;
+  title: string;
+  content: string;
+}
+```
+
+**Example:**
+
+```typescript
+import { generatePlanContent } from '@riotprompt/riotplan';
+
+const generated = await generatePlanContent(
+  'Implement user authentication with JWT tokens',
+  {
+    steps: 6,
+    provider: 'anthropic',
+    model: 'claude-sonnet-4-5'
+  }
+);
+
+console.log(generated.summary);
+console.log(generated.steps.length); // 6
+```
+
+## Utilities
+
+### findPlan
+
+Find a plan directory by searching up from current directory.
+
+```typescript
+function findPlan(startPath?: string): string | null
+```
+
+**Example:**
+
+```typescript
+import { findPlan } from '@riotprompt/riotplan';
+
+const planPath = findPlan();
+if (planPath) {
+  console.log('Found plan at:', planPath);
+}
+```
+
+### isPlan
+
+Check if a directory is a valid plan.
+
+```typescript
+function isPlan(path: string): boolean
+```
+
+**Example:**
+
+```typescript
+import { isPlan } from '@riotprompt/riotplan';
+
+if (isPlan('./my-feature')) {
+  console.log('Valid plan directory');
+}
+```
+
+## Error Handling
+
+All async functions can throw these errors:
+
+```typescript
+class PlanNotFoundError extends Error {
+  constructor(path: string);
+}
+
+class InvalidPlanError extends Error {
+  constructor(path: string, reason: string);
+}
+
+class StepNotFoundError extends Error {
+  constructor(stepNumber: number);
+}
+
+class ValidationError extends Error {
+  constructor(errors: ValidationError[]);
+}
+```
+
+**Example:**
+
+```typescript
+import { loadPlan, PlanNotFoundError } from '@riotprompt/riotplan';
+
+try {
+  const plan = await loadPlan('./my-feature');
+} catch (error) {
+  if (error instanceof PlanNotFoundError) {
+    console.error('Plan not found:', error.message);
+  } else {
+    throw error;
   }
 }
 ```
 
-**Example:**
-```typescript
-const formatter = Formatter.create({
-  formatOptions: {
-    areaSeparator: "markdown",
-    sectionSeparator: "tag"
-  }
-});
+## Next Steps
 
-const formatted = formatter.format(section);
-```
-
-## Parser
-
-Converts Markdown content to structured sections.
-
-### Parser.create()
-
-```typescript
-class Parser {
-  static create(options?: ParserOptions): Parser
-  
-  parse(markdown: string): Section<any>
-  parseFile(filePath: string): Section<any>
-}
-
-interface ParserOptions {
-  logger?: Logger;
-  parameters?: Parameters;
-}
-```
-
-**Example:**
-```typescript
-const parser = Parser.create({
-  parameters: { version: "1.0" }
-});
-
-const section = parser.parse(`
-# Instructions
-Follow {{version}} guidelines.
-`);
-```
-
-## Loader
-
-Loads prompt content from files and directories.
-
-### Loader.create()
-
-```typescript
-class Loader {
-  static create(options?: LoaderOptions): Loader
-  
-  load<T extends WeightedText>(directories: string[]): Promise<Section<T>[]>
-}
-
-interface LoaderOptions {
-  parameters?: Parameters;
-  ignorePatterns?: string[];
-}
-```
-
-**Example:**
-```typescript
-const loader = Loader.create({
-  parameters: { env: "prod" },
-  ignorePatterns: ["*.tmp", "draft-*"]
-});
-
-const sections = await loader.load<Context>(['./context']);
-```
-
-## Builder
-
-Programmatic prompt construction with fluent interface.
-
-### Builder.create()
-
-```typescript
-class Builder {
-  static create(options: BuilderOptions): Builder
-  
-  addPersonaPath(path: string): Promise<Builder>
-  addInstructionPath(path: string): Promise<Builder>
-  addContextPath(path: string): Promise<Builder>
-  addContentPath(path: string): Promise<Builder>
-  
-  addContent(content: string, options?: WeightedOptions): Promise<Builder>
-  addContext(context: string, options?: WeightedOptions): Promise<Builder>
-  
-  loadContext(directories: string[], options?: WeightedOptions): Promise<Builder>
-  loadContent(directories: string[], options?: WeightedOptions): Promise<Builder>
-  
-  build(): Promise<Prompt>
-}
-
-interface BuilderOptions {
-  basePath: string;
-  overridePaths?: string[];
-  overrides?: boolean;
-  parameters?: Parameters;
-}
-```
-
-## Override
-
-Multi-layered prompt customization system.
-
-### Override.create()
-
-```typescript
-class Override {
-  static create(options: OverrideOptions): Override
-  
-  customize(filePath: string, section: Section<any>): Promise<void>
-}
-
-interface OverrideOptions {
-  configDirs: string[];
-  overrides: boolean;
-  parameters?: Parameters;
-  logger?: Logger;
-}
-```
-
-## Recipes API
-
-### Configuration-Driven Recipe Creation
-
-```typescript
-function cook(config: RecipeConfig): Promise<Prompt>
-
-interface RecipeConfig {
-  basePath: string;
-  overridePaths?: string[];
-  overrides?: boolean;
-  parameters?: Parameters;
-  
-  // Template inheritance
-  template?: string;
-  
-  // Content sections
-  persona?: ContentItem;
-  instructions?: ContentItem[];
-  content?: ContentItem[];
-  context?: ContentItem[];
-}
-
-type ContentItem = string | {
-  content?: string;
-  path?: string;
-  directories?: string[];
-  title?: string;
-  weight?: number;
-}
-```
-
-### Fluent Recipe Builder
-
-```typescript
-function recipe(basePath: string): RecipeBuilder
-
-interface RecipeBuilder {
-  template(name: string): RecipeBuilder;
-  with(config: Partial<RecipeConfig>): RecipeBuilder;
-  persona(persona: ContentItem): RecipeBuilder;
-  instructions(...instructions: ContentItem[]): RecipeBuilder;
-  content(...content: ContentItem[]): RecipeBuilder;
-  context(...context: ContentItem[]): RecipeBuilder;
-  parameters(params: Parameters): RecipeBuilder;
-  overrides(enabled: boolean): RecipeBuilder;
-  overridePaths(paths: string[]): RecipeBuilder;
-  cook(): Promise<Prompt>;
-}
-```
-
-### Template Configuration
-
-```typescript
-function registerTemplates(templates: Record<string, TemplateConfig>): void
-function getTemplates(): Record<string, TemplateConfig>
-function clearTemplates(): void
-
-interface TemplateConfig {
-  persona?: ContentItem;
-  instructions?: ContentItem[];
-  content?: ContentItem[];
-  context?: ContentItem[];
-}
-```
-
-## Prompt
-
-The final assembled prompt with formatting capabilities.
-
-```typescript
-interface Prompt {
-  personaSection?: Section<Trait>;
-  instructionsSection?: Section<Instruction>;
-  contentSection?: Section<ContentText>;
-  contextSection?: Section<Context>;
-  
-  format(formatter?: Formatter): string;
-}
-```
-
-## Utility Types
-
-### WeightedOptions
-
-```typescript
-interface WeightedOptions {
-  weight?: number;
-  title?: string;
-  parameters?: Parameters;
-}
-```
-
-### Parameters
-
-```typescript
-type Parameters = Record<string, any>
-```
-
-### Logger
-
-```typescript
-interface Logger {
-  debug(message: string, ...args: any[]): void;
-  info(message: string, ...args: any[]): void;
-  warn(message: string, ...args: any[]): void;
-  error(message: string, ...args: any[]): void;
-  verbose(message: string, ...args: any[]): void;
-  silly(message: string, ...args: any[]): void;
-}
-```
-
-## Import Examples
-
-```typescript
-// Core functionality
-import { 
-  createSection, 
-  createParameters, 
-  Formatter,
-  Section,
-  Instruction,
-  ContentText,
-  Context,
-  Trait
-} from '@riotprompt/riotprompt';
-
-// Advanced features
-import {
-  Parser,
-  Loader,
-  Builder,
-  Override
-} from '@riotprompt/riotprompt';
-
-// Recipes system
-import {
-  cook,
-  recipe,
-  registerTemplates,
-  getTemplates,
-  clearTemplates
-} from '@riotprompt/riotprompt';
-``` 
+- [Programmatic Usage](programmatic-usage) - Detailed usage guide
+- [Core Concepts](core-concepts) - Understanding plans and steps
+- [Creating Plans](creating-plans) - Plan creation guide

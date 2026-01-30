@@ -1,194 +1,241 @@
-# RiotPrompt
+# RiotPlan
 
-A powerful, flexible prompt building library and CLI tool for AI applications with zero hardcoded assumptions.
+**Framework for long-lived, stateful AI workflows.**
 
-## Features
+RiotPlan helps you manage complex, multi-step AI-assisted tasks that span multiple sessions, have persistent state, and can be interrupted and resumed.
 
-- **Structured Prompts**: Treat prompts as code with specialized sections for Persona, Instructions, Context, and more.
-- **Advanced Prompt Strategies**: First-class support for **Constraints**, **Tone**, **Few-Shot Examples**, **Reasoning Steps**, **Response Format**, and **Safeguards**.
-- **Model Alignment**: Automatically adapts prompt structure to match the specific expectations of each model provider:
-    - **Anthropic (Claude)**: Places Personas, Roles, Tone, and Constraints into the `system` parameter. Additionally, converts `schema` definitions into forced **Tool Use** calls, extracting structured results to match OpenAI's output format.
-    - **OpenAI**: Maps generic roles to the appropriate `system` or `developer` (for O-series) messages.
-    - **Gemini**: Structurally adapts components into System Instructions and content parts, supporting the rich prompt components recommended in [Gemini's Prompt Design Strategies](https://cloud.google.com/vertex-ai/docs/generative-ai/learn/prompt-design-strategies).
-- **CLI Tool**: Scaffold, manage, process, and **execute** prompts directly from the terminal.
-- **Model Agnostic**: Format prompts for different models (GPT-4, Claude, Gemini, etc.) automatically.
-- **Execution Engine**: Run prompts against OpenAI, Anthropic, or Gemini APIs directly.
-- **Portable**: Serialize prompts to JSON or XML for easy exchange between systems.
-- **Type-Safe**: Full TypeScript support with excellent IntelliSense.
+## What is a Plan?
 
-## Installation
+A **plan** is a structured way to manage multi-step AI-assisted tasks that:
 
-```bash
-npm install riotprompt
-```
+- **Span multiple sessions** - Work on a task over days or weeks
+- **Have persistent state** - Track progress in STATUS.md
+- **Are organized into steps** - Numbered files (01-STEP.md, 02-STEP.md)
+- **Can be interrupted and resumed** - Pick up where you left off
+- **Support collaboration** - Human reviews, feedback loops
 
-## CLI Usage
+## Quick Start
 
-RiotPrompt comes with a command-line interface to help you organize, process, and execute prompts.
-
-**New to RiotPrompt?** Check out the [Quick Start Guide](docs/public/quick-start.md) or [Complete Tutorial](docs/public/tutorial.md).
-
-### 1. Create a Prompt
-
-Scaffold a new prompt directory structure:
+### Installation
 
 ```bash
-# Create a new prompt in 'my-prompt' directory
-npx riotprompt create my-prompt --persona "You are a data expert."
-
-# Import an existing prompt from JSON or XML
-npx riotprompt create my-prompt --import existing-prompt.json
+npm install -g @riotprompt/riotplan
 ```
 
-This creates a structured directory:
-```
-my-prompt/
-├── persona.md          # System prompt / Persona definition
-├── instructions.md     # Main task instructions
-└── context/            # Directory for reference files (data.json, docs.md)
-```
-
-### 2. Process a Prompt
-
-Compile a prompt directory (or file) into a formatted payload for an LLM, or export it to other formats.
+### Create Your First Plan
 
 ```bash
-# Format for GPT-4 (output to console)
-npx riotprompt process my-prompt -m gpt-4
-
-# Export to JSON (useful for API integrations)
-npx riotprompt process my-prompt --format json --output prompt.json
-
-# Export to XML
-npx riotprompt process my-prompt --format xml --output prompt.xml
+riotplan create my-feature
 ```
 
-### 3. Execute a Prompt
+This will:
+1. Prompt for your plan description
+2. Ask if you want analysis first or direct generation
+3. Use AI to generate detailed plan content
+4. Create all plan files with actionable steps
 
-Run the prompt directly against an LLM provider.
-
-#### Provider Setup & API Keys
-
-RiotPrompt supports multiple LLM providers. You'll need to obtain an API key for the provider you wish to use and set it as an environment variable (recommended) or pass it via the `-k` flag.
-
-##### Google Gemini
-1.  **Get API Key**: Visit [Google AI Studio](https://aistudio.google.com/), sign in, and click "Get API key".
-2.  **Set Environment Variable**: `GEMINI_API_KEY`
-3.  **Available Models**: Check the [Gemini models documentation](https://ai.google.dev/models/gemini). Common models include `gemini-1.5-pro`, `gemini-1.5-flash`.
-
-##### OpenAI
-1.  **Get API Key**: Go to the [OpenAI Platform](https://platform.openai.com/api-keys), sign up/login, and create a new secret key.
-2.  **Set Environment Variable**: `OPENAI_API_KEY`
-3.  **Available Models**: See [OpenAI Models](https://platform.openai.com/docs/models). Common models: `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`.
-
-##### Anthropic (Claude)
-1.  **Get API Key**: Access the [Anthropic Console](https://console.anthropic.com/settings/keys) and generate an API key.
-2.  **Set Environment Variable**: `ANTHROPIC_API_KEY`
-3.  **Available Models**: View [Claude Models](https://docs.anthropic.com/en/docs/models-overview). Common models: `claude-3-opus-20240229`, `claude-3-sonnet-20240229`.
-
-**Example .env file:**
-```bash
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-GEMINI_API_KEY=AIza...
-```
-
-**Commands**:
+### Check Status
 
 ```bash
-# Run with default model (usually gpt-4)
-npx riotprompt execute my-prompt
-
-# Run with specific model
-npx riotprompt execute my-prompt -m claude-3-opus
-
-# Run with explicit API key (overrides env)
-npx riotprompt execute my-prompt -m gpt-4 -k sk-proj-...
-
-# Control parameters
-npx riotprompt execute my-prompt -t 0.7 --max-tokens 1000
+riotplan status
 ```
 
-### Configuration
+### Execute Steps
 
-You can configure defaults using a `riotprompt.yaml` file in your project root:
+```bash
+# Start a step
+riotplan step start 1
 
-```yaml
-defaultModel: "gpt-4"
-promptsDir: "./prompts"
-outputDir: "./output"
+# Complete a step
+riotplan step complete 1
 ```
 
-## Library Usage
+## Plan Structure
 
-You can also use RiotPrompt programmatically in your application.
+```
+my-plan/
+├── my-plan-prompt.md     # Meta-prompt (original request)
+├── SUMMARY.md            # Overview of the approach
+├── EXECUTION_PLAN.md     # Step-by-step strategy
+├── STATUS.md             # Current state (auto-updated)
+└── plan/                 # Step files
+    ├── 01-first-step.md
+    ├── 02-second-step.md
+    └── ...
+```
+
+## Key Features
+
+### AI-Powered Generation
+
+RiotPlan uses AI to generate detailed, actionable plans from your descriptions:
+
+```bash
+# Install AI provider
+npm install @riotprompt/execution-anthropic
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# Create plan with AI
+riotplan create my-feature
+```
+
+Get specific, actionable content tailored to your project instead of generic templates.
+
+### Persistent State
+
+STATUS.md tracks everything:
+- Current progress and step
+- Completed steps with timestamps
+- Blockers and issues
+- Execution history
+
+### Step Management
+
+```bash
+# List steps
+riotplan step list
+
+# Start next pending step
+riotplan step start
+
+# Complete current step
+riotplan step complete
+
+# Add new step
+riotplan step add "Integration Testing"
+```
+
+### Analysis Workflow
+
+For complex plans, use analysis-first workflow:
+
+```bash
+# Create with analysis
+riotplan create complex-feature --analyze
+
+# Provide feedback
+riotplan elaborate ./complex-feature
+
+# Mark ready and generate
+riotplan analysis ready ./complex-feature
+riotplan generate ./complex-feature
+```
+
+## Status Indicators
+
+| Symbol | Meaning |
+|--------|---------|
+| ⬜ | Pending |
+| 🔄 | In Progress |
+| ✅ | Completed |
+| ❌ | Failed |
+| ⏸️ | Blocked |
+| ⏭️ | Skipped |
+
+## MCP Integration
+
+RiotPlan is available as an MCP (Model Context Protocol) server for AI assistants like Cursor.
+
+Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "riotplan": {
+      "command": "npx",
+      "args": ["-y", "@riotprompt/riotplan", "riotplan-mcp"]
+    }
+  }
+}
+```
+
+This allows AI assistants to:
+- Create and manage plans
+- Track progress
+- Execute steps
+- Update status
+
+## Programmatic Usage
 
 ```typescript
-import { cook, registerTemplates } from 'riotprompt';
+import { loadPlan, resumePlan } from '@riotprompt/riotplan';
 
-// Advanced prompt creation with structured outputs
-import { z } from "zod";
+// Load an existing plan
+const plan = await loadPlan('./prompts/my-feature');
 
-const prompt = await cook({
-  basePath: __dirname,
-  persona: { content: 'You are a helpful AI assistant' },
-  instructions: [{ content: 'Analyze the content' }],
-  content: [{ content: dataToAnalyze }],
-  // Structured Output with Zod - automatic validation across all providers
-  schema: z.object({
-      summary: z.string(),
-      tags: z.array(z.string()),
-      confidence: z.number().min(0).max(1)
-  })
-});
+console.log(plan.metadata.code);     // 'my-feature'
+console.log(plan.state.status);      // 'in_progress'
+console.log(plan.state.currentStep); // 3
 
-// Learn more: https://kjerneverk.github.io/riotprompt/structured-outputs
-
-// Register and use templates
-registerTemplates({
-  'analysis': {
-    persona: { content: 'You are an expert analyst' },
-    instructions: [{ content: 'Provide detailed analysis' }],
-  },
-});
-
-const analysisPrompt = await cook({
-  basePath: __dirname,
-  template: 'analysis',
-  content: [{ content: dataToAnalyze, title: 'Data' }],
-});
+// Resume execution
+const result = await resumePlan(plan);
 ```
 
 ## Documentation
 
-For more detailed guides on architecture and advanced usage, check the [Guide](guide/index.md).
+### Guides
 
-- [Core Concepts](docs/public/core-concepts.md)
-- [Recipes System](docs/public/recipes.md)
-- [Structured Outputs](docs/public/structured-outputs.md)
-- [API Reference](docs/public/api-reference.md)
-- [Template Configuration](docs/public/template-configuration.md)
+- [Getting Started](getting-started) - Installation and quick start
+- [Core Concepts](core-concepts) - Understanding Plans, Steps, and STATUS.md
+- [Plan Structure](plan-structure) - Anatomy of a plan directory
+- [Creating Plans](creating-plans) - How to create and initialize plans
+- [Managing Steps](managing-steps) - Working with plan steps
+
+### CLI Reference
+
+- [CLI Overview](cli-usage) - Command Line Interface overview
+- [plan](cli-plan) - Initialize and manage plans
+- [status](cli-status) - Check plan status and progress
+- [step](cli-step) - Manage plan steps
+- [feedback](cli-feedback) - Create and manage feedback records
+
+### API Reference
+
+- [API Reference](api-reference) - Complete API documentation
+- [Programmatic Usage](programmatic-usage) - Using riotplan in your code
+- [STATUS.md Format](status-format) - Understanding the STATUS.md file
 
 ## Philosophy
 
-RiotPrompt is designed to be completely generic and unopinionated. Unlike other prompt libraries that assume specific use cases, RiotPrompt provides the building blocks for any prompt-based application while maintaining type safety and developer experience.
+Plans bridge the gap between:
+- **Prompts** (single interactions)
+- **Agentic conversations** (multi-turn sessions)
+- **Long-running workflows** (days/weeks of work)
 
-## Architecture
+A plan provides structure for complex, iterative AI-assisted work where:
+- The work can't be done in one session
+- Progress needs to be tracked
+- Humans need to review and provide feedback
+- The approach may evolve based on findings
 
-- **Cook Function**: Core prompt creation engine
-- **Template System**: Reusable configuration patterns
-- **Content Processing**: Flexible content handling (files, directories, inline)
-- **Override System**: Hierarchical customization
-- **Type Safety**: Full TypeScript support throughout
+## Real-World Examples
 
-## Contributing
+Plans in the wild:
 
-Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+```
+prompts/
+├── big-splitup/           # Codebase restructuring
+├── commit-splitting/      # Feature implementation
+├── parallel-execution/    # Complex feature with phases
+├── shared-utils/          # Package extraction
+└── ai-service/            # Service extraction
+```
+
+## Related Packages
+
+- `@riotprompt/riotprompt` - Prompt modeling for single interactions
+- `@riotprompt/agentic` - Multi-turn conversation framework
+- `@riotprompt/execution` - LLM provider interfaces
+- `@riotprompt/execution-anthropic` - Anthropic Claude provider
+- `@riotprompt/execution-openai` - OpenAI GPT provider
+- `@riotprompt/execution-gemini` - Google Gemini provider
 
 ## License
 
-Apache-2.0 License - see [LICENSE](LICENSE) for details.
+Apache-2.0
 
----
+## Get Started
 
-*Build better prompts, faster.*
+Ready to create your first plan?
+
+[Get Started →](getting-started)

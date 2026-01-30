@@ -27,7 +27,12 @@
     "precommit": "npm run build && npm run lint && npm run test",
     "prepublishOnly": "npm run clean && npm run build",
     "mcp:build": "vite build && chmod 755 ./dist/mcp-server.js 2>/dev/null || true",
-    "mcp:inspect": "mcp-inspector npx -y @riotprompt/riotplan"
+    "mcp:inspect": "mcp-inspector npx -y @riotprompt/riotplan",
+    "docs:dev": "cd docs && cp ../README.md public/ && npm install && npm run dev",
+    "docs:build": "cd docs && cp ../README.md public/ && npm install && npm run build",
+    "docs:preview": "cd docs && npm run preview",
+    "docs:test": "cd docs && npm run test",
+    "docs:coverage": "cd docs && npm run coverage"
   },
   "keywords": [
     "plan",
