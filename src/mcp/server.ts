@@ -53,11 +53,8 @@ async function main() {
 
     // Suppress stdout to prevent pollution of MCP JSON-RPC stream
     // MCP uses stdio for communication, so any stdout output will corrupt the protocol
-    // Redirect stdout to stderr so logs don't break MCP
-    process.stdout.write = (chunk: any, encoding?: any, callback?: any): boolean => {
-        // Redirect to stderr instead
-        return process.stderr.write(chunk, encoding, callback);
-    };
+    // We don't redirect stdout because the StdioServerTransport needs to control it
+    // Instead, we rely on RIOTPLAN_MCP_SERVER env var to suppress logging in tools
 
     // Set up error logging for MCP server
     const logError = (context: string, error: unknown) => {
