@@ -13,27 +13,57 @@ Guide collaborative exploration of a new idea without premature commitment. This
 
 ## Workflow
 
-### 1. Create the Idea
+### 1. Extract or Gather Idea Details
 
-Ask the user for:
-- A short code/identifier (kebab-case)
-- Initial description of the concept
+**FIRST: Check if the user already provided details in their message.**
 
-Create the idea:
+Look for:
+- A code/identifier (kebab-case name like "my-feature")
+- A description of the concept
+
+**If both are present in the user's message:**
+- Extract them immediately
+- Proceed directly to creating the idea
+- Do NOT ask the user to repeat information they already provided
+
+**If either is missing:**
+- Have a natural conversation: "What idea would you like to explore? Give me a short name and brief description."
+- When they respond, extract the code (convert to kebab-case if needed) and description
+- Then create the idea
+
+**Example extractions:**
+
+User says: "explore_idea user-notifications I want to add real-time notifications"
+→ code: "user-notifications", description: "I want to add real-time notifications"
+
+User says: "explore_idea real-time notifications for users"
+→ code: "real-time-notifications" (derived), description: "real-time notifications for users"
+
+User says: "explore_idea"
+→ Ask: "What idea would you like to explore? Give me a short name and brief description."
+
+### 2. Create the Idea
+
+Once you have both code and description, create the idea immediately:
+
 ```
 riotplan_idea_create({
-  code: "feature-name",
-  description: "Initial concept description"
+  code: "extracted-or-provided-code",
+  description: "extracted or provided description"
 })
 ```
 
-### 2. Explore Together
+### 3. Begin Exploration
+
+After creating the idea, immediately begin the exploration conversation. Don't wait for further prompting.
 
 Ask open-ended questions:
 - "What's driving this idea?"
 - "What constraints should we consider?"
 - "What questions need answering?"
 - "Do you have any evidence (docs, diagrams, examples)?"
+
+### 4. Capture Responses in TWO Ways
 
 As the user responds, capture their thinking in TWO ways:
 
@@ -87,7 +117,7 @@ riotplan_idea_add_evidence({
 - Structured data makes information actionable
 - Timeline shows both the conversation and the decisions
 
-### 3. Decide Next Steps
+### 5. Decide Next Steps
 
 After exploration, ask:
 - "Does this feel worth pursuing?"
@@ -115,20 +145,46 @@ Just leave it in idea stage. Can return later.
 2. **Cheap Thinking**: Capture thoughts without formality
 3. **Evidence Gathering**: Collect supporting materials
 4. **Question-Driven**: Surface unknowns early
+5. **Smart Extraction**: Use information the user already provided; don't make them repeat themselves
 
-## Example Conversation
+## Example Conversations
 
-**User**: "I'm thinking about adding real-time notifications"
+### Example 1: User Provides Everything Upfront
 
-**AI**: "Let's explore that idea. I'll create a lightweight idea to capture your thinking."
+**User**: `/riotplan/explore_idea real-time-notifications Add push notifications for important updates`
 
-*Creates idea*
+**AI**: *Extracts code="real-time-notifications", description="Add push notifications for important updates"*
+*Calls riotplan_idea_create immediately*
 
-**AI**: "What's driving this? What problem does it solve?"
+**AI**: "Let's explore this idea. What's driving the need for push notifications? What constraints should we consider?"
+
+### Example 2: User Provides Partial Info
+
+**User**: `/riotplan/explore_idea I want to add notifications`
+
+**AI**: *Extracts description="I want to add notifications", derives code="add-notifications"*
+*Calls riotplan_idea_create immediately*
+
+**AI**: "Let's explore this notification idea. What's driving this? What problem does it solve?"
+
+### Example 3: User Provides No Info
+
+**User**: `/riotplan/explore_idea`
+
+**AI**: "What idea would you like to explore? Give me a short name and brief description."
+
+**User**: "I'm thinking about real-time notifications for users"
+
+**AI**: *Extracts code="real-time-notifications", description="real-time notifications for users"*
+*Calls riotplan_idea_create*
+
+**AI**: "Great! Let's explore this. What's driving the need for real-time notifications?"
+
+### Example 4: Rich Exploration with Narrative
 
 **User**: "Users miss important updates. They have to refresh constantly. It's frustrating for them and we're getting complaints. I think we need some kind of push notification system but I'm not sure if it should be in-app only or also email."
 
-*Captures narrative first:*
+**AI**: *Captures full narrative first:*
 ```
 riotplan_idea_add_narrative({
   content: "Users miss important updates. They have to refresh constantly. It's frustrating for them and we're getting complaints. I think we need some kind of push notification system but I'm not sure if it should be in-app only or also email.",
@@ -144,41 +200,27 @@ riotplan_idea_add_note({
 })
 ```
 
-**AI**: "What constraints should we consider?"
+**AI**: "Good context. What constraints should we consider?"
 
 **User**: "Must work on mobile. Can't require WebSockets everywhere. Also need to keep costs reasonable."
 
-*Captures narrative and extracts constraints*
-
-**AI**: "Good constraints. Any questions we need to answer?"
-
-**User**: "How do we handle offline users? What's the latency requirement?"
-
-*Adds questions*
-
-**AI**: "Do you have any examples or diagrams of how this might work?"
-
-**User**: "Here's a diagram from a similar system" [attaches image]
-
-*Adds evidence*
-
-**AI**: "This is taking shape. Ready to explore different approaches for implementation?"
-
-**User**: "Yes, let's look at options"
-
-*Transitions to shaping*
+**AI**: *Captures narrative and extracts constraints*
 
 ## Anti-Patterns
 
+❌ Don't ask for information the user already provided
 ❌ Don't immediately jump to solutions
 ❌ Don't create detailed plans yet
 ❌ Don't pressure for commitment
 ❌ Don't skip evidence gathering
+❌ Don't stop after creating the idea—begin exploration immediately
 
+✅ Do extract information from the user's message
 ✅ Do ask open questions
 ✅ Do capture all thinking
 ✅ Do surface constraints early
 ✅ Do gather supporting materials
+✅ Do start the conversation immediately after creating the idea
 
 ## Transition Criteria
 
