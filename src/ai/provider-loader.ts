@@ -36,10 +36,12 @@ export async function loadProvider(config: ProviderConfig): Promise<Provider> {
                 throw new Error(`Unknown provider: ${name}`);
         }
     } catch (error) {
-        if (error instanceof Error && error.message.includes('Cannot find package')) {
+        if (error instanceof Error && (error.message.includes('Cannot find package') || error.message.includes('Cannot find module'))) {
             throw new Error(
                 `Provider '${name}' is not installed. Install it with:\n` +
-                `  npm install @kjerneverk/execution-${name}`
+                `  npm install @kjerneverk/execution-${name}\n\n` +
+                `Note: If you're using RiotPlan via MCP (e.g., in Cursor), consider using manual step creation ` +
+                `with riotplan_step_add instead of riotplan_generate to avoid needing separate AI providers.`
             );
         }
         throw error;

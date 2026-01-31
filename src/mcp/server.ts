@@ -51,6 +51,19 @@ async function main() {
     // Mark that we're running as MCP server
     process.env.RIOTPLAN_MCP_SERVER = 'true';
 
+    // Set up error logging for MCP server
+    const logError = (context: string, error: unknown) => {
+        const timestamp = new Date().toISOString();
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        
+        // Log to stderr for MCP debugging
+        console.error(`[${timestamp}] RiotPlan MCP Error (${context}):`, errorMessage);
+        if (errorStack) {
+            console.error('Stack:', errorStack);
+        }
+    };
+
     // Initialize MCP server with high-level API
     const server = new McpServer(
         {
@@ -88,105 +101,121 @@ async function main() {
             description,
             inputSchema,
             async (args, { sendNotification, _meta }) => {
-                // Resolve plan directory using four-tier strategy
-                const planDirectory = await resolvePlanDirectory();
-                
-                const context = {
-                    workingDirectory: planDirectory,
-                    config: undefined,
-                    logger: undefined,
-                    sendNotification: async (notification: {
-                        method: string;
-                        params: {
-                            progressToken?: string | number;
-                            progress: number;
-                            total?: number;
-                            message?: string;
-                        };
-                    }) => {
-                        if (notification.method === 'notifications/progress' && _meta?.progressToken) {
-                            const params: Record<string, any> = {
-                                progressToken: _meta.progressToken,
-                                progress: notification.params.progress,
+                try {
+                    // Resolve plan directory using four-tier strategy
+                    const planDirectory = await resolvePlanDirectory();
+                    
+                    const context = {
+                        workingDirectory: planDirectory,
+                        config: undefined,
+                        logger: undefined,
+                        sendNotification: async (notification: {
+                            method: string;
+                            params: {
+                                progressToken?: string | number;
+                                progress: number;
+                                total?: number;
+                                message?: string;
                             };
-                            if (notification.params.total !== undefined) {
-                                params.total = notification.params.total;
+                        }) => {
+                            if (notification.method === 'notifications/progress' && _meta?.progressToken) {
+                                const params: Record<string, any> = {
+                                    progressToken: _meta.progressToken,
+                                    progress: notification.params.progress,
+                                };
+                                if (notification.params.total !== undefined) {
+                                    params.total = notification.params.total;
+                                }
+                                if (notification.params.message !== undefined) {
+                                    params.message = notification.params.message;
+                                }
+                                await sendNotification({
+                                    method: 'notifications/progress',
+                                    params: removeUndefinedValues(params) as any,
+                                });
                             }
-                            if (notification.params.message !== undefined) {
-                                params.message = notification.params.message;
-                            }
-                            await sendNotification({
-                                method: 'notifications/progress',
-                                params: removeUndefinedValues(params) as any,
+                        },
+                        progressToken: _meta?.progressToken,
+                    };
+
+                    const result = await executeTool(name, args, context);
+
+                    if (result.success) {
+                        const content: Array<{ type: 'text'; text: string }> = [];
+
+                        if (result.logs && result.logs.length > 0) {
+                            content.push({
+                                type: 'text' as const,
+                                text: '=== Command Output ===\n' + result.logs.join('\n') + '\n\n=== Result ===',
                             });
                         }
-                    },
-                    progressToken: _meta?.progressToken,
-                };
 
-                const result = await executeTool(name, args, context);
-
-                if (result.success) {
-                    const content: Array<{ type: 'text'; text: string }> = [];
-
-                    if (result.logs && result.logs.length > 0) {
+                        const cleanData = removeUndefinedValues(result.data);
+                        const textContent = cleanData !== undefined 
+                            ? JSON.stringify(cleanData, null, 2)
+                            : result.message || 'Success';
+                        
                         content.push({
                             type: 'text' as const,
-                            text: '=== Command Output ===\n' + result.logs.join('\n') + '\n\n=== Result ===',
+                            text: textContent,
                         });
-                    }
 
-                    const cleanData = removeUndefinedValues(result.data);
-                    const textContent = cleanData !== undefined 
-                        ? JSON.stringify(cleanData, null, 2)
-                        : result.message || 'Success';
-                    
-                    content.push({
-                        type: 'text' as const,
-                        text: textContent,
-                    });
+                        return { content };
+                    } else {
+                        const errorParts: string[] = [];
 
-                    return { content };
-                } else {
-                    const errorParts: string[] = [];
+                        if (result.logs && result.logs.length > 0) {
+                            errorParts.push('=== Command Output ===');
+                            errorParts.push(result.logs.join('\n'));
+                            errorParts.push('\n=== Error ===');
+                        }
 
-                    if (result.logs && result.logs.length > 0) {
-                        errorParts.push('=== Command Output ===');
-                        errorParts.push(result.logs.join('\n'));
-                        errorParts.push('\n=== Error ===');
-                    }
+                        errorParts.push(result.error || 'Unknown error');
 
-                    errorParts.push(result.error || 'Unknown error');
-
-                    if (result.context && typeof result.context === 'object') {
-                        errorParts.push('\n=== Context ===');
-                        for (const [key, value] of Object.entries(result.context)) {
-                            if (value !== undefined && value !== null) {
-                                errorParts.push(`${key}: ${String(value)}`);
+                        if (result.context && typeof result.context === 'object') {
+                            errorParts.push('\n=== Context ===');
+                            for (const [key, value] of Object.entries(result.context)) {
+                                if (value !== undefined && value !== null) {
+                                    errorParts.push(`${key}: ${String(value)}`);
+                                }
                             }
                         }
-                    }
 
-                    if (result.details) {
-                        if (result.details.stderr && result.details.stderr.trim()) {
-                            errorParts.push('\n=== STDERR ===');
-                            errorParts.push(result.details.stderr);
+                        if (result.details) {
+                            if (result.details.stderr && result.details.stderr.trim()) {
+                                errorParts.push('\n=== STDERR ===');
+                                errorParts.push(result.details.stderr);
+                            }
+                            if (result.details.stdout && result.details.stdout.trim()) {
+                                errorParts.push('\n=== STDOUT ===');
+                                errorParts.push(result.details.stdout);
+                            }
                         }
-                        if (result.details.stdout && result.details.stdout.trim()) {
-                            errorParts.push('\n=== STDOUT ===');
-                            errorParts.push(result.details.stdout);
+
+                        if (result.recovery && result.recovery.length > 0) {
+                            errorParts.push('\n=== Recovery Steps ===');
+                            errorParts.push(...result.recovery.map((step, i) => `${i + 1}. ${step}`));
                         }
-                    }
 
-                    if (result.recovery && result.recovery.length > 0) {
-                        errorParts.push('\n=== Recovery Steps ===');
-                        errorParts.push(...result.recovery.map((step, i) => `${i + 1}. ${step}`));
+                        return {
+                            content: [{
+                                type: 'text' as const,
+                                text: errorParts.join('\n'),
+                            }],
+                            isError: true,
+                        };
                     }
-
+                } catch (error) {
+                    // Catch any unhandled errors in tool execution
+                    logError(`tool:${name}`, error);
+                    
+                    const errorMessage = error instanceof Error ? error.message : String(error);
+                    const errorStack = error instanceof Error ? error.stack : undefined;
+                    
                     return {
                         content: [{
                             type: 'text' as const,
-                            text: errorParts.join('\n'),
+                            text: `=== Unhandled Error in ${name} ===\n\n${errorMessage}\n\n${errorStack ? `Stack:\n${errorStack}` : ''}`,
                         }],
                         isError: true,
                     };
@@ -531,7 +560,24 @@ async function main() {
     await server.connect(transport);
 }
 
-// Handle errors silently in MCP mode
-main().catch((_error) => {
+// Set up global error handlers for better resilience
+process.on('uncaughtException', (error) => {
+    console.error('[RiotPlan MCP] Uncaught Exception:', error.message);
+    console.error('Stack:', error.stack);
+    // Don't exit - try to keep server running
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[RiotPlan MCP] Unhandled Rejection at:', promise);
+    console.error('Reason:', reason);
+    // Don't exit - try to keep server running
+});
+
+// Handle errors with better logging
+main().catch((error) => {
+    console.error('[RiotPlan MCP] Fatal error during startup:', error instanceof Error ? error.message : String(error));
+    if (error instanceof Error && error.stack) {
+        console.error('Stack:', error.stack);
+    }
     process.exit(1);
 });
