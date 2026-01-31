@@ -25,7 +25,7 @@ export async function transitionStage(args: z.infer<typeof TransitionSchema>, co
     let lifecycle: string;
     try {
         lifecycle = await readFile(lifecycleFile, "utf-8");
-    } catch (error) {
+    } catch (_error) {
         throw new Error(`Could not read LIFECYCLE.md at ${lifecycleFile}. Is this a valid plan/idea directory?`);
     }
     

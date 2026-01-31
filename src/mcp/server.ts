@@ -51,6 +51,14 @@ async function main() {
     // Mark that we're running as MCP server
     process.env.RIOTPLAN_MCP_SERVER = 'true';
 
+    // Suppress stdout to prevent pollution of MCP JSON-RPC stream
+    // MCP uses stdio for communication, so any stdout output will corrupt the protocol
+    // Redirect stdout to stderr so logs don't break MCP
+    process.stdout.write = (chunk: any, encoding?: any, callback?: any): boolean => {
+        // Redirect to stderr instead
+        return process.stderr.write(chunk, encoding, callback);
+    };
+
     // Set up error logging for MCP server
     const logError = (context: string, error: unknown) => {
         const timestamp = new Date().toISOString();
@@ -58,8 +66,10 @@ async function main() {
         const errorStack = error instanceof Error ? error.stack : undefined;
         
         // Log to stderr for MCP debugging
+        // eslint-disable-next-line no-console
         console.error(`[${timestamp}] RiotPlan MCP Error (${context}):`, errorMessage);
         if (errorStack) {
+            // eslint-disable-next-line no-console
             console.error('Stack:', errorStack);
         }
     };
@@ -562,21 +572,27 @@ async function main() {
 
 // Set up global error handlers for better resilience
 process.on('uncaughtException', (error) => {
+    // eslint-disable-next-line no-console
     console.error('[RiotPlan MCP] Uncaught Exception:', error.message);
+    // eslint-disable-next-line no-console
     console.error('Stack:', error.stack);
     // Don't exit - try to keep server running
 });
 
 process.on('unhandledRejection', (reason, promise) => {
+    // eslint-disable-next-line no-console
     console.error('[RiotPlan MCP] Unhandled Rejection at:', promise);
+    // eslint-disable-next-line no-console
     console.error('Reason:', reason);
     // Don't exit - try to keep server running
 });
 
 // Handle errors with better logging
 main().catch((error) => {
+    // eslint-disable-next-line no-console
     console.error('[RiotPlan MCP] Fatal error during startup:', error instanceof Error ? error.message : String(error));
     if (error instanceof Error && error.stack) {
+        // eslint-disable-next-line no-console
         console.error('Stack:', error.stack);
     }
     process.exit(1);

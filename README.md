@@ -434,6 +434,8 @@ Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
 
 **Zero-Config Experience:** If you don't set `RIOTPLAN_PLAN_DIRECTORY`, RiotPlan will automatically find your `plans/` directory by walking up from your workspace root. No configuration needed!
 
+The MCP server includes enhanced error handling and logging for better reliability and debugging.
+
 ### MCP Tools
 
 **Lifecycle Management:**

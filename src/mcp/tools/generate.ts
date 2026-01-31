@@ -42,8 +42,8 @@ export async function executeGenerate(
     args: any,
     _context: ToolExecutionContext
 ): Promise<ToolResult> {
+    const providerName = args.provider || 'anthropic';
     try {
-        const providerName = args.provider || 'anthropic';
         const provider = await loadProvider({
             name: providerName,
             apiKey: process.env[`${providerName.toUpperCase()}_API_KEY`],

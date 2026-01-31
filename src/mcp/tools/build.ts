@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { join } from "node:path";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { formatTimestamp, resolveDirectory, formatError, createSuccess, formatDate } from "./shared.js";
+import { resolveDirectory, formatError, createSuccess, formatDate } from "./shared.js";
 import { transitionStage } from "./transition.js";
 import { generatePlan } from "../../ai/generator.js";
 import { loadProvider } from "../../ai/provider-loader.js";
@@ -95,7 +95,7 @@ export async function buildPlan(args: z.infer<typeof BuildSchema>, context: Tool
             name: providerName,
             apiKey: process.env[`${providerName.toUpperCase()}_API_KEY`],
         });
-    } catch (error) {
+    } catch (_error) {
         throw new Error(
             `AI provider not available. ` +
             `Install @kjerneverk/execution-${providerName} and set ${providerName.toUpperCase()}_API_KEY environment variable. ` +
@@ -257,7 +257,7 @@ ${step.background || '_Add background context..._'}
 
 ## Tasks
 
-${step.tasks && step.tasks.length > 0 ? step.tasks.map((t, i) => `### ${i + 1}. ${t.title}\n\n${t.description || '_Add task details..._'}`).join('\n\n') : '_Add specific tasks..._'}
+${step.tasks && step.tasks.length > 0 ? step.tasks.map((t, i) => `### ${i + 1}. ${t.id}\n\n${t.description || '_Add task details..._'}`).join('\n\n') : '_Add specific tasks..._'}
 
 ## Acceptance Criteria
 
