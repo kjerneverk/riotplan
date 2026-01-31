@@ -30,6 +30,7 @@ export default defineConfig({
         "@kjerneverk/execution-gemini",
         "@kjerneverk/riotprompt",
         "@kjerneverk/agentic",
+        "@utilarium/cardigantime",
         "@modelcontextprotocol/sdk",
         "@modelcontextprotocol/sdk/server/mcp.js",
         "@modelcontextprotocol/sdk/server/stdio.js",

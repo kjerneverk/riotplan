@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { executeTool } from './tools/index.js';
 import { getResources, readResource } from './resources/index.js';
 import { getPrompts, getPrompt } from './prompts/index.js';
+import { resolvePlanDirectory } from '../config/index.js';
 
 /**
  * Recursively remove undefined values from an object to prevent JSON serialization issues
@@ -87,8 +88,11 @@ async function main() {
             description,
             inputSchema,
             async (args, { sendNotification, _meta }) => {
+                // Resolve plan directory using four-tier strategy
+                const planDirectory = await resolvePlanDirectory();
+                
                 const context = {
-                    workingDirectory: process.cwd(),
+                    workingDirectory: planDirectory,
                     config: undefined,
                     logger: undefined,
                     sendNotification: async (notification: {

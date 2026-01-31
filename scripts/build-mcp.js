@@ -34,6 +34,7 @@ async function buildMcpServer() {
                     '@modelcontextprotocol/sdk/server/mcp.js',
                     '@modelcontextprotocol/sdk/server/stdio.js',
                     'zod',
+                    '@utilarium/cardigantime',
                     '@kjerneverk/execution',
                     '@kjerneverk/execution-anthropic',
                     '@kjerneverk/execution-openai',
