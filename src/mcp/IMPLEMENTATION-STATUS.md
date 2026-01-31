@@ -60,9 +60,9 @@ The implementation uses incorrect property names that don't match the actual rio
 ### Build Configuration
 
 The MCP build script needs to externalize the execution provider packages:
-- `@riotprompt/execution-anthropic`
-- `@riotprompt/execution-openai`
-- `@riotprompt/execution-gemini`
+- `@kjerneverk/execution-anthropic`
+- `@kjerneverk/execution-openai`
+- `@kjerneverk/execution-gemini`
 
 ## Next Steps
 

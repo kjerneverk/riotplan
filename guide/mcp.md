@@ -14,7 +14,7 @@ The MCP server exposes riotplan's functionality through:
 ### Global Installation
 
 ```bash
-npm install -g @riotprompt/riotplan
+npm install -g @kjerneverk/riotplan
 ```
 
 ### Cursor Configuration
@@ -26,7 +26,7 @@ Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
   "mcpServers": {
     "riotplan": {
       "command": "npx",
-      "args": ["-y", "@riotprompt/riotplan", "riotplan-mcp"]
+      "args": ["-y", "@kjerneverk/riotplan", "riotplan-mcp"]
     }
   }
 }
@@ -257,11 +257,11 @@ export GOOGLE_API_KEY="..."
 Install the corresponding execution package:
 
 ```bash
-npm install -g @riotprompt/execution-anthropic
+npm install -g @kjerneverk/execution-anthropic
 # or
-npm install -g @riotprompt/execution-openai
+npm install -g @kjerneverk/execution-openai
 # or
-npm install -g @riotprompt/execution-gemini
+npm install -g @kjerneverk/execution-gemini
 ```
 
 ## Usage Patterns
@@ -343,7 +343,7 @@ Check installation:
 ```bash
 which riotplan-mcp
 # or
-npx @riotprompt/riotplan riotplan-mcp --help
+npx @kjerneverk/riotplan riotplan-mcp --help
 ```
 
 ### Tools Not Available
@@ -355,7 +355,7 @@ Verify MCP configuration in Cursor settings and restart the IDE.
 Ensure API keys are set and execution packages are installed:
 ```bash
 echo $ANTHROPIC_API_KEY
-npm list -g @riotprompt/execution-anthropic
+npm list -g @kjerneverk/execution-anthropic
 ```
 
 ## See Also

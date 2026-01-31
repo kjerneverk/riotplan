@@ -17,13 +17,13 @@ RiotPlan helps you manage complex, multi-step AI-assisted tasks that:
 ### Basic Installation
 
 ```bash
-npm install -g @riotprompt/riotplan
+npm install -g @kjerneverk/riotplan
 ```
 
 Or as a development dependency:
 
 ```bash
-npm install --save-dev @riotprompt/riotplan
+npm install --save-dev @kjerneverk/riotplan
 ```
 
 ### AI-Powered Generation (Optional)
@@ -32,13 +32,13 @@ RiotPlan can use AI to generate detailed, actionable plans from your description
 
 ```bash
 # For Anthropic Claude (recommended)
-npm install @riotprompt/execution-anthropic
+npm install @kjerneverk/execution-anthropic
 
 # For OpenAI GPT
-npm install @riotprompt/execution-openai
+npm install @kjerneverk/execution-openai
 
 # For Google Gemini
-npm install @riotprompt/execution-gemini
+npm install @kjerneverk/execution-gemini
 ```
 
 Set your API key:
@@ -162,7 +162,7 @@ Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
   "mcpServers": {
     "riotplan": {
       "command": "npx",
-      "args": ["-y", "@riotprompt/riotplan", "riotplan-mcp"]
+      "args": ["-y", "@kjerneverk/riotplan", "riotplan-mcp"]
     }
   }
 }
