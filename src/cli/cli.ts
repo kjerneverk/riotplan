@@ -37,6 +37,7 @@ import { registerAnalysisCommands } from "./commands/analysis.js";
 import { registerGenerateCommand } from "./commands/generate.js";
 import { registerAmendCommand, registerAmendmentsCommands } from "./commands/amend.js";
 import { registerVerifyCommand } from "./commands/verify.js";
+import { registerConfigCommands } from "./commands/config.js";
 
 // Read version from package.json
 // In development: src/cli/cli.ts -> ../../package.json
@@ -83,6 +84,7 @@ export function createProgram(): Command {
     registerAmendCommand(program);
     registerAmendmentsCommands(program);
     registerVerifyCommand(program);
+    registerConfigCommands(program);
 
     // Global options
     program
