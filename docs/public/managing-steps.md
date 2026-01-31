@@ -309,7 +309,7 @@ Current status of step 05: In Progress
 ### List Steps
 
 ```typescript
-import { loadPlan } from '@riotprompt/riotplan';
+import { loadPlan } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./my-feature');
 
@@ -326,7 +326,7 @@ const currentStep = plan.steps.find(s => s.number === plan.state.currentStep);
 ### Start Step
 
 ```typescript
-import { loadPlan, startStep } from '@riotprompt/riotplan';
+import { loadPlan, startStep } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./my-feature');
 const updatedPlan = await startStep(plan, 5);
@@ -335,7 +335,7 @@ const updatedPlan = await startStep(plan, 5);
 ### Complete Step
 
 ```typescript
-import { loadPlan, completeStep } from '@riotprompt/riotplan';
+import { loadPlan, completeStep } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./my-feature');
 const updatedPlan = await completeStep(plan, 5, {
@@ -346,7 +346,7 @@ const updatedPlan = await completeStep(plan, 5, {
 ### Add Step
 
 ```typescript
-import { loadPlan, addStep } from '@riotprompt/riotplan';
+import { loadPlan, addStep } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./my-feature');
 const updatedPlan = await addStep(plan, {

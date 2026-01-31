@@ -6,7 +6,7 @@
 
 ```bash
 # 1. Install a provider
-npm install @riotprompt/execution-anthropic
+npm install @kjerneverk/execution-anthropic
 
 # 2. Set API key
 export ANTHROPIC_API_KEY="sk-ant-..."
@@ -79,21 +79,21 @@ Create src/ folder with server.js and app.js files
 
 ### Anthropic Claude (Recommended)
 ```bash
-npm install @riotprompt/execution-anthropic
+npm install @kjerneverk/execution-anthropic
 export ANTHROPIC_API_KEY="sk-ant-..."
 riotplan create my-plan --provider anthropic
 ```
 
 ### OpenAI GPT
 ```bash
-npm install @riotprompt/execution-openai
+npm install @kjerneverk/execution-openai
 export OPENAI_API_KEY="sk-..."
 riotplan create my-plan --provider openai
 ```
 
 ### Google Gemini
 ```bash
-npm install @riotprompt/execution-gemini
+npm install @kjerneverk/execution-gemini
 export GOOGLE_API_KEY="..."
 riotplan create my-plan --provider gemini
 ```
@@ -133,7 +133,7 @@ riotplan create my-plan --no-ai
 
 **"No AI providers installed"**
 ```bash
-npm install @riotprompt/execution-anthropic
+npm install @kjerneverk/execution-anthropic
 ```
 
 **"No API key found"**

@@ -1,5 +1,5 @@
 /**
- * @riotprompt/riotplan-commands-render
+ * @kjerneverk/riotplan-commands-render
  *
  * Render commands for RiotPlan CLI
  */

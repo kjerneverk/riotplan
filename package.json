@@ -1,6 +1,6 @@
 {
-  "name": "@riotprompt/riotplan",
-  "version": "1.0.6",
+  "name": "@kjerneverk/riotplan",
+  "version": "1.0.7",
   "description": "Framework for long-lived, stateful AI workflows (plans)",
   "type": "module",
   "main": "./dist/index.js",
@@ -27,7 +27,7 @@
     "precommit": "npm run build && npm run lint && npm run test",
     "prepublishOnly": "npm run clean && npm run build",
     "mcp:build": "vite build && chmod 755 ./dist/mcp-server.js 2>/dev/null || true",
-    "mcp:inspect": "mcp-inspector npx -y @riotprompt/riotplan",
+    "mcp:inspect": "mcp-inspector npx -y @kjerneverk/riotplan",
     "docs:dev": "cd docs && cp ../README.md public/ && npm install && npm run dev",
     "docs:build": "cd docs && cp ../README.md public/ && npm install && npm run build",
     "docs:preview": "cd docs && npm run preview",
@@ -61,18 +61,18 @@
     "zod": "^4.3.6"
   },
   "peerDependencies": {
-    "@riotprompt/agentic": "^1.0.4",
-    "@riotprompt/execution": "^1.0.1",
-    "@riotprompt/riotprompt": "^1.0.5"
+    "@kjerneverk/agentic": "^1.0.5",
+    "@kjerneverk/execution": "^1.0.4",
+    "@kjerneverk/riotprompt": "^1.0.6"
   },
   "peerDependenciesMeta": {
-    "@riotprompt/agentic": {
+    "@kjerneverk/agentic": {
       "optional": true
     },
-    "@riotprompt/execution": {
+    "@kjerneverk/execution": {
       "optional": true
     },
-    "@riotprompt/riotprompt": {
+    "@kjerneverk/riotprompt": {
       "optional": true
     }
   },

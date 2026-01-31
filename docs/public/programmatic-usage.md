@@ -5,7 +5,7 @@ Learn how to use RiotPlan programmatically in your Node.js applications.
 ## Installation
 
 ```bash
-npm install @riotprompt/riotplan
+npm install @kjerneverk/riotplan
 ```
 
 ## Basic Usage
@@ -13,7 +13,7 @@ npm install @riotprompt/riotplan
 ### Loading a Plan
 
 ```typescript
-import { loadPlan } from '@riotprompt/riotplan';
+import { loadPlan } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./prompts/my-feature');
 
@@ -28,7 +28,7 @@ console.log(plan.steps.length);      // 8
 ### Creating a Plan
 
 ```typescript
-import { createPlan } from '@riotprompt/riotplan';
+import { createPlan } from '@kjerneverk/riotplan';
 
 const plan = await createPlan({
   code: 'user-auth',
@@ -73,7 +73,7 @@ console.log(`Created plan at: ${plan.files.prompt}`);
 ### Listing Steps
 
 ```typescript
-import { loadPlan } from '@riotprompt/riotplan';
+import { loadPlan } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./prompts/my-feature');
 
@@ -97,7 +97,7 @@ console.log(`Completed: ${completedSteps.length}`);
 ### Starting a Step
 
 ```typescript
-import { loadPlan, startStep } from '@riotprompt/riotplan';
+import { loadPlan, startStep } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./prompts/my-feature');
 
@@ -110,7 +110,7 @@ console.log(`Started step ${updatedPlan.state.currentStep}`);
 ### Completing a Step
 
 ```typescript
-import { loadPlan, completeStep } from '@riotprompt/riotplan';
+import { loadPlan, completeStep } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./prompts/my-feature');
 
@@ -127,7 +127,7 @@ console.log(`Progress: ${updatedPlan.state.progress}%`);
 ### Adding Steps
 
 ```typescript
-import { loadPlan, addStep } from '@riotprompt/riotplan';
+import { loadPlan, addStep } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./prompts/my-feature');
 
@@ -159,7 +159,7 @@ const updatedPlan3 = await addStep(plan, {
 ### Resume Execution
 
 ```typescript
-import { loadPlan, resumePlan } from '@riotprompt/riotplan';
+import { loadPlan, resumePlan } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./prompts/my-feature');
 
@@ -189,7 +189,7 @@ console.log(`Duration: ${result.duration}ms`);
 ### Execute Single Step
 
 ```typescript
-import { loadPlan, executeStep } from '@riotprompt/riotplan';
+import { loadPlan, executeStep } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./prompts/my-feature');
 
@@ -212,7 +212,7 @@ if (result.success) {
 ### Reading Status
 
 ```typescript
-import { loadPlan } from '@riotprompt/riotplan';
+import { loadPlan } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./prompts/my-feature');
 
@@ -228,7 +228,7 @@ console.log(`Last updated: ${state.lastUpdated}`);
 ### Updating Status
 
 ```typescript
-import { loadPlan, updatePlanState } from '@riotprompt/riotplan';
+import { loadPlan, updatePlanState } from '@kjerneverk/riotplan';
 
 const plan = await loadPlan('./prompts/my-feature');
 
@@ -241,7 +241,7 @@ const updatedPlan = await updatePlanState(plan, {
 ### Parsing STATUS.md
 
 ```typescript
-import { parseStatus } from '@riotprompt/riotplan';
+import { parseStatus } from '@kjerneverk/riotplan';
 import { readFileSync } from 'fs';
 
 const content = readFileSync('./my-feature/STATUS.md', 'utf-8');
@@ -255,7 +255,7 @@ console.log(state.progress);
 ### Generating STATUS.md
 
 ```typescript
-import { generateStatus } from '@riotprompt/riotplan';
+import { generateStatus } from '@kjerneverk/riotplan';
 import { writeFileSync } from 'fs';
 
 const statusContent = generateStatus(plan);
@@ -267,7 +267,7 @@ writeFileSync('./my-feature/STATUS.md', statusContent);
 ### Validate Plan Structure
 
 ```typescript
-import { validatePlan } from '@riotprompt/riotplan';
+import { validatePlan } from '@kjerneverk/riotplan';
 
 const result = await validatePlan('./prompts/my-feature', {
   fix: true  // Attempt to fix issues
@@ -297,7 +297,7 @@ if (result.fixed) {
 ### Generate Plan Content
 
 ```typescript
-import { generatePlanContent } from '@riotprompt/riotplan';
+import { generatePlanContent } from '@kjerneverk/riotplan';
 
 const generated = await generatePlanContent(
   'Implement user authentication with JWT tokens',
@@ -320,7 +320,7 @@ generated.steps.forEach(step => {
 ### Generate with Analysis
 
 ```typescript
-import { generatePlanContent } from '@riotprompt/riotplan';
+import { generatePlanContent } from '@kjerneverk/riotplan';
 import { readFileSync } from 'fs';
 
 const analysis = readFileSync('./analysis/REQUIREMENTS.md', 'utf-8');
@@ -344,7 +344,7 @@ import {
   InvalidPlanError,
   StepNotFoundError,
   ValidationError
-} from '@riotprompt/riotplan';
+} from '@kjerneverk/riotplan';
 
 try {
   const plan = await loadPlan('./prompts/my-feature');
@@ -371,7 +371,7 @@ try {
 ### Find Plan Directory
 
 ```typescript
-import { findPlan } from '@riotprompt/riotplan';
+import { findPlan } from '@kjerneverk/riotplan';
 
 // Search up from current directory
 const planPath = findPlan();
@@ -389,7 +389,7 @@ const planPath2 = findPlan('./src/features');
 ### Check if Directory is a Plan
 
 ```typescript
-import { isPlan } from '@riotprompt/riotplan';
+import { isPlan } from '@kjerneverk/riotplan';
 
 if (isPlan('./my-feature')) {
   console.log('Valid plan directory');
@@ -404,7 +404,7 @@ if (isPlan('./my-feature')) {
 
 ```typescript
 import express from 'express';
-import { loadPlan, startStep, completeStep } from '@riotprompt/riotplan';
+import { loadPlan, startStep, completeStep } from '@kjerneverk/riotplan';
 
 const app = express();
 
@@ -434,7 +434,7 @@ app.listen(3000);
 
 ```typescript
 #!/usr/bin/env node
-import { loadPlan, resumePlan } from '@riotprompt/riotplan';
+import { loadPlan, resumePlan } from '@kjerneverk/riotplan';
 
 async function main() {
   const planPath = process.argv[2] || '.';

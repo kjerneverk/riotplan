@@ -66,19 +66,19 @@ describe("execution", () => {
 
         it("should throw for anthropic provider", () => {
             expect(() => createExecutor({ type: "anthropic" })).toThrow(
-                "requires @riotprompt/execution-anthropic"
+                "requires @kjerneverk/execution-anthropic"
             );
         });
 
         it("should throw for openai provider", () => {
             expect(() => createExecutor({ type: "openai" })).toThrow(
-                "requires @riotprompt/execution-openai"
+                "requires @kjerneverk/execution-openai"
             );
         });
 
         it("should throw for gemini provider", () => {
             expect(() => createExecutor({ type: "gemini" })).toThrow(
-                "requires @riotprompt/execution-gemini"
+                "requires @kjerneverk/execution-gemini"
             );
         });
 

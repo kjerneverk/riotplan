@@ -39,7 +39,7 @@ export async function loadProvider(config: ProviderConfig): Promise<Provider> {
         if (error instanceof Error && error.message.includes('Cannot find package')) {
             throw new Error(
                 `Provider '${name}' is not installed. Install it with:\n` +
-                `  npm install @riotprompt/execution-${name}`
+                `  npm install @kjerneverk/execution-${name}`
             );
         }
         throw error;
@@ -47,17 +47,17 @@ export async function loadProvider(config: ProviderConfig): Promise<Provider> {
 }
 
 async function loadAnthropicProvider(_apiKey?: string): Promise<Provider> {
-    const { createAnthropicProvider } = await import('@riotprompt/execution-anthropic');
+    const { createAnthropicProvider } = await import('@kjerneverk/execution-anthropic');
     return createAnthropicProvider();
 }
 
 async function loadOpenAIProvider(_apiKey?: string): Promise<Provider> {
-    const { createOpenAIProvider } = await import('@riotprompt/execution-openai');
+    const { createOpenAIProvider } = await import('@kjerneverk/execution-openai');
     return createOpenAIProvider();
 }
 
 async function loadGeminiProvider(_apiKey?: string): Promise<Provider> {
-    const { createGeminiProvider } = await import('@riotprompt/execution-gemini');
+    const { createGeminiProvider } = await import('@kjerneverk/execution-gemini');
     return createGeminiProvider();
 }
 
@@ -68,9 +68,9 @@ export async function detectAvailableProviders(): Promise<string[]> {
     const providers: string[] = [];
     
     const candidates = [
-        { name: 'anthropic', pkg: '@riotprompt/execution-anthropic' },
-        { name: 'openai', pkg: '@riotprompt/execution-openai' },
-        { name: 'gemini', pkg: '@riotprompt/execution-gemini' },
+        { name: 'anthropic', pkg: '@kjerneverk/execution-anthropic' },
+        { name: 'openai', pkg: '@kjerneverk/execution-openai' },
+        { name: 'gemini', pkg: '@kjerneverk/execution-gemini' },
     ];
     
     for (const candidate of candidates) {

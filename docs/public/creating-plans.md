@@ -118,15 +118,15 @@ Install an AI provider:
 
 ```bash
 # Anthropic Claude (recommended)
-npm install @riotprompt/execution-anthropic
+npm install @kjerneverk/execution-anthropic
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # OpenAI GPT
-npm install @riotprompt/execution-openai
+npm install @kjerneverk/execution-openai
 export OPENAI_API_KEY="sk-..."
 
 # Google Gemini
-npm install @riotprompt/execution-gemini
+npm install @kjerneverk/execution-gemini
 export GOOGLE_API_KEY="..."
 ```
 
@@ -353,7 +353,7 @@ Add auth
 ### "No AI providers installed"
 
 ```bash
-npm install @riotprompt/execution-anthropic
+npm install @kjerneverk/execution-anthropic
 ```
 
 ### "No API key found"
@@ -383,7 +383,7 @@ riotplan create my-feature
 ## Programmatic Creation
 
 ```typescript
-import { createPlan } from '@riotprompt/riotplan';
+import { createPlan } from '@kjerneverk/riotplan';
 
 const plan = await createPlan({
   code: 'user-auth',

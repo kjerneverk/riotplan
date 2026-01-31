@@ -19,7 +19,7 @@ A **plan** is a structured way to manage multi-step AI-assisted tasks that:
 ### Installation
 
 ```bash
-npm install -g @riotprompt/riotplan
+npm install -g @kjerneverk/riotplan
 ```
 
 ### Create Your First Plan
@@ -72,7 +72,7 @@ RiotPlan uses AI to generate detailed, actionable plans from your descriptions:
 
 ```bash
 # Install AI provider
-npm install @riotprompt/execution-anthropic
+npm install @kjerneverk/execution-anthropic
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # Create plan with AI
@@ -143,7 +143,7 @@ Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
   "mcpServers": {
     "riotplan": {
       "command": "npx",
-      "args": ["-y", "@riotprompt/riotplan", "riotplan-mcp"]
+      "args": ["-y", "@kjerneverk/riotplan", "riotplan-mcp"]
     }
   }
 }
@@ -158,7 +158,7 @@ This allows AI assistants to:
 ## Programmatic Usage
 
 ```typescript
-import { loadPlan, resumePlan } from '@riotprompt/riotplan';
+import { loadPlan, resumePlan } from '@kjerneverk/riotplan';
 
 // Load an existing plan
 const plan = await loadPlan('./prompts/my-feature');
@@ -223,12 +223,12 @@ prompts/
 
 ## Related Packages
 
-- `@riotprompt/riotprompt` - Prompt modeling for single interactions
-- `@riotprompt/agentic` - Multi-turn conversation framework
-- `@riotprompt/execution` - LLM provider interfaces
-- `@riotprompt/execution-anthropic` - Anthropic Claude provider
-- `@riotprompt/execution-openai` - OpenAI GPT provider
-- `@riotprompt/execution-gemini` - Google Gemini provider
+- `@kjerneverk/riotprompt` - Prompt modeling for single interactions
+- `@kjerneverk/agentic` - Multi-turn conversation framework
+- `@kjerneverk/execution` - LLM provider interfaces
+- `@kjerneverk/execution-anthropic` - Anthropic Claude provider
+- `@kjerneverk/execution-openai` - OpenAI GPT provider
+- `@kjerneverk/execution-gemini` - Google Gemini provider
 
 ## License
 

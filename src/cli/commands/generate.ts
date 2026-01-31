@@ -335,7 +335,7 @@ async function generatePlanWithAI(
         
         if (available.length === 0) {
             console.log(chalk.yellow("\n⚠️  No AI providers installed. Falling back to template generation."));
-            console.log(chalk.gray("Install a provider with: npm install @riotprompt/execution-anthropic"));
+            console.log(chalk.gray("Install a provider with: npm install @kjerneverk/execution-anthropic"));
             await generatePlanFiles(planPath, planName, context, { stepCount });
             return;
         }

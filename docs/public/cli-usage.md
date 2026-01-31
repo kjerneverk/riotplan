@@ -5,7 +5,7 @@ RiotPlan provides a comprehensive command-line interface for managing long-lived
 ## Installation
 
 ```bash
-npm install -g @riotprompt/riotplan
+npm install -g @kjerneverk/riotplan
 ```
 
 Verify installation:
