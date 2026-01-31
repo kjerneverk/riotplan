@@ -26,7 +26,10 @@ Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
   "mcpServers": {
     "riotplan": {
       "command": "npx",
-      "args": ["-y", "@kjerneverk/riotplan", "riotplan-mcp"]
+      "args": ["-y", "@kjerneverk/riotplan"],
+      "env": {
+        "RIOTPLAN_PLAN_DIRECTORY": "/path/to/plans"
+      }
     }
   }
 }
@@ -38,11 +41,23 @@ Or if installed globally:
 {
   "mcpServers": {
     "riotplan": {
-      "command": "riotplan-mcp"
+      "command": "riotplan-mcp",
+      "env": {
+        "RIOTPLAN_PLAN_DIRECTORY": "/path/to/plans"
+      }
     }
   }
 }
 ```
+
+**Zero-Config Option:** If you don't set `RIOTPLAN_PLAN_DIRECTORY`, RiotPlan will automatically:
+1. Look for a `riotplan.config.yaml` (or `.json`, `.js`, `.ts`) file in your workspace
+2. Walk up the directory tree to find an existing `plans/` directory
+3. Fall back to `./plans` in your workspace root
+
+This means most users don't need any configuration - RiotPlan will automatically find your plans directory!
+
+See the [Configuration Guide](./configuration.md) for complete details.
 
 ## Tools
 

@@ -1,6 +1,6 @@
 {
   "name": "@kjerneverk/riotplan",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Framework for long-lived, stateful AI workflows (plans)",
   "type": "module",
   "main": "./dist/index.js",
@@ -63,7 +63,7 @@
   "peerDependencies": {
     "@kjerneverk/agentic": "^1.0.5",
     "@kjerneverk/execution": "^1.0.4",
-    "@kjerneverk/riotprompt": "^1.0.6"
+    "@kjerneverk/riotprompt": "^1.0.7"
   },
   "peerDependenciesMeta": {
     "@kjerneverk/agentic": {

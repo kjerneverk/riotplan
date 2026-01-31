@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/kjerneverk/riotplan/main/schemas/riotplan-config.schema.json",
+  "title": "RiotPlan Configuration",
+  "description": "Configuration file for RiotPlan - a framework for long-lived, stateful AI workflows",
+  "type": "object",
+  "properties": {
+    "planDirectory": {
+      "type": "string",
+      "description": "Path to the directory where plans are stored. Can be relative (resolved from config file location) or absolute. Defaults to './plans' if not specified.",
+      "default": "./plans",
+      "examples": [
+        "./plans",
+        "../shared-plans",
+        "/absolute/path/to/plans",
+        "./.riotplan/plans"
+      ]
+    },
+    "defaultProvider": {
+      "type": "string",
+      "enum": ["anthropic", "openai", "gemini"],
+      "description": "Default AI provider to use for plan generation when not specified via CLI flags or tool parameters.",
+      "examples": ["anthropic", "openai", "gemini"]
+    },
+    "defaultModel": {
+      "type": "string",
+      "description": "Default model to use for plan generation. If not specified, uses provider defaults.",
+      "examples": [
+        "claude-3-5-sonnet-20241022",
+        "claude-3-opus-20240229",
+        "gpt-4",
+        "gpt-4-turbo",
+        "gemini-pro",
+        "gemini-1.5-pro"
+      ]
+    },
+    "templateDirectory": {
+      "type": "string",
+      "description": "Path to custom plan templates directory. Can be relative (resolved from config file location) or absolute. If not specified, uses built-in templates.",
+      "examples": [
+        "./templates",
+        "./.riotplan/templates",
+        "/absolute/path/to/templates"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

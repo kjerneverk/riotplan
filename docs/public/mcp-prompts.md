@@ -180,14 +180,16 @@ Execute a plan with intelligent state management. Automatically determines next 
 - `path` (optional) - Path to the plan directory to execute
 
 **Workflow:**
-1. Check current status
-2. Identify next step
-3. Read step details
-4. Execute tasks
-5. Verify completion
-6. Update status
-7. Move to next step
-8. Repeat until complete
+1. **Verify plan structure** - Check if step files exist in `plan/` directory, create them from `EXECUTION_PLAN.md` if missing
+2. Check current status
+3. Identify next step
+4. Read step details
+5. **Mark step as started** using `riotplan_step_start` BEFORE doing work
+6. Execute tasks
+7. Verify completion
+8. **Mark step as complete** using `riotplan_step_complete` AFTER completing work
+9. Move to next step
+10. Repeat until complete
 
 **Example:**
 
@@ -199,11 +201,15 @@ execute_plan({
 ```
 
 **What it does:**
+- Verifies plan structure and creates step files if needed
 - Reads STATUS.md to find current state
 - Guides through each step
+- **Uses RiotPlan tracking tools** (`riotplan_step_start`, `riotplan_step_complete`)
 - Updates status automatically
 - Handles blockers and issues
 - Tracks progress
+
+**For AI Assistants:** This prompt REQUIRES using RiotPlan's tracking infrastructure. Always use `riotplan_step_start` before work and `riotplan_step_complete` after work. Don't just do the work without tracking.
 
 ### execute_step
 
@@ -221,11 +227,11 @@ Execute a single step from a plan with proper status tracking.
 **Workflow:**
 1. Check plan status
 2. Read step details
-3. Mark step as started
+3. **Mark step as started** using `riotplan_step_start` BEFORE doing work
 4. Execute tasks
 5. Verify acceptance criteria
-6. Mark step as complete
-7. Update STATUS.md
+6. **Mark step as complete** using `riotplan_step_complete` AFTER completing work
+7. STATUS.md is updated automatically by the tools
 
 **Example:**
 
@@ -239,8 +245,11 @@ execute_step({
 **What it does:**
 - Focuses on single step
 - Provides task checklist
+- **Uses RiotPlan tracking tools** (`riotplan_step_start`, `riotplan_step_complete`)
 - Verifies completion
-- Updates status properly
+- Updates status properly through RiotPlan tools
+
+**For AI Assistants:** This prompt REQUIRES using RiotPlan's tracking infrastructure. You MUST call `riotplan_step_start` before work and `riotplan_step_complete` after work. Never skip these calls - they're how RiotPlan tracks execution.
 
 ### track_progress
 
@@ -395,6 +404,24 @@ track_progress({
 - **Simple tasks** - Tools may be more direct
 - **Custom workflows** - Build your own process
 - **Automation** - Scripts use tools, not prompts
+
+### Execution Tracking Requirements
+
+**When executing plans, you MUST:**
+
+1. **Use tracking tools** - Always call `riotplan_step_start` before work and `riotplan_step_complete` after work
+2. **Check for step files** - Verify `plan/` directory exists with step files before executing
+3. **Create step files if missing** - If `EXECUTION_PLAN.md` exists but step files don't, create them first
+4. **Let RiotPlan manage state** - Don't manually edit STATUS.md, use the tools
+
+**Common Mistakes:**
+
+- ❌ Executing steps without using tracking tools
+- ❌ Just doing the work and skipping STATUS.md updates
+- ❌ Executing a plan without step files in `plan/` directory
+- ❌ Treating RiotPlan like a regular task list
+
+**Remember:** RiotPlan managed the thinking (idea → shaping → planning), so it should also manage the execution. Use the tools!
 
 ### Combining Prompts and Tools
 
