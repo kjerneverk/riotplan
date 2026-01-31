@@ -1,5 +1,5 @@
 /**
- * @riotprompt/riotplan-commands-plan
+ * @kjerneverk/riotplan-commands-plan
  *
  * Plan management commands for RiotPlan CLI
  */
