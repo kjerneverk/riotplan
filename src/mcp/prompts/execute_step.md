@@ -6,6 +6,8 @@ You are helping the user execute a single step from a plan, following the guidan
 
 Follow this workflow to execute a plan step using the riotplan MCP tools and resources available to you.
 
+**CRITICAL**: This workflow REQUIRES using RiotPlan's tracking infrastructure. You MUST use `riotplan_step_start` before work and `riotplan_step_complete` after work. Do NOT just do the work without tracking.
+
 ## Step 1: Check Plan Status
 
 Use the `riotplan_status` tool to check the current plan state:
@@ -50,7 +52,7 @@ Review the step content to understand:
 
 ## Step 3: Mark Step as Started
 
-IMPORTANT: Use the `riotplan_step_start` MCP tool to mark the step as in progress:
+**CRITICAL**: You MUST use the `riotplan_step_start` MCP tool to mark the step as in progress BEFORE doing any work:
 
 ```
 {
@@ -59,7 +61,7 @@ IMPORTANT: Use the `riotplan_step_start` MCP tool to mark the step as in progres
 }
 ```
 
-This updates STATUS.md and sets timestamps to track progress.
+This updates STATUS.md and sets timestamps to track progress. **Never skip this step** - it's how RiotPlan tracks execution. If you do work without calling this tool first, you're bypassing RiotPlan's execution management.
 
 ## Step 4: Execute Step Tasks
 
@@ -81,7 +83,7 @@ Before marking the step complete, verify:
 
 ## Step 6: Mark Step as Complete
 
-IMPORTANT: Use the `riotplan_step_complete` MCP tool to mark the step as done:
+**CRITICAL**: You MUST use the `riotplan_step_complete` MCP tool to mark the step as done AFTER completing all work:
 
 ```
 {
@@ -90,7 +92,7 @@ IMPORTANT: Use the `riotplan_step_complete` MCP tool to mark the step as done:
 }
 ```
 
-This updates STATUS.md and advances the plan to the next step.
+This updates STATUS.md and advances the plan to the next step. **Never skip this step** - completion tracking is essential. If you complete work without calling this tool, RiotPlan won't know the step is done.
 
 ## Step 7: Check Overall Progress
 
@@ -99,10 +101,12 @@ Use `riotplan_status` again to see updated progress and identify the next step t
 ## Important Guidelines
 
 - **Always use MCP tools** - Never shell out to CLI commands
-- **Update status properly** - Mark steps as started and completed
+- **Update status properly** - Mark steps as started and completed using RiotPlan tools
 - **One step at a time** - Focus on completing one step fully before moving to the next
 - **Test thoroughly** - Each step should include verification of acceptance criteria
 - **Document issues** - If you encounter blockers, document them in STATUS.md
+- **Use RiotPlan tracking** - Never execute steps without using `riotplan_step_start` and `riotplan_step_complete`
+- **Don't bypass tracking** - Even if it seems like extra overhead, tracking is essential for RiotPlan
 
 ## Handling Issues
 
@@ -139,4 +143,19 @@ Here's how you should execute this workflow:
 6. Call `riotplan_step_complete` when done
 7. Call `riotplan_status` again to see progress
 
-Remember: Always use MCP tools, never shell commands.
+Remember: Always use MCP tools, never shell commands. And always use RiotPlan's tracking tools (`riotplan_step_start` and `riotplan_step_complete`) - don't just do the work without tracking.
+
+## For AI Assistants
+
+**When executing a step, you MUST:**
+
+1. Call `riotplan_step_start` BEFORE doing any work
+2. Do the actual work (implement, test, document)
+3. Call `riotplan_step_complete` AFTER completing the work
+
+**Do NOT:**
+- Just do the work without calling the tracking tools
+- Skip STATUS.md updates
+- Treat this like a regular task list
+
+**Key principle**: If you're working on a RiotPlan step, RiotPlan should manage the execution tracking, not just the planning. Use the tools!

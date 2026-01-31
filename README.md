@@ -1,18 +1,38 @@
-# riotplan
+# RiotPlan
 
-Framework for long-lived, stateful AI workflows (plans).
+**A plan is bigger than a list of tasks.**
+
+RiotPlan treats plans as **constructs**—full lifecycles from idea exploration through execution. Think before you execute. Support complex, multi-session workflows. Make your plans truly yours.
+
+Part of [Kjerneverk](https://kjerneverk.github.io) - structured formats for working with generative AI.
 
 **Now available as an MCP server!** Integrate with Cursor and other AI assistants - see [MCP Integration](#mcp-integration) below.
 
-## What is a Plan?
+## Why RiotPlan?
 
-A **plan** is a structured way to manage multi-step AI-assisted tasks that:
+### Before: Inadequate Planning
 
-- **Span multiple sessions** - Work on a task over days or weeks
-- **Have persistent state** - Track progress in STATUS.md
-- **Are organized into steps** - Numbered files (01-STEP.md, 02-STEP.md)
+- **Tool-generated inadequacy**: Depending on AI tools to generate simplistic task lists
+- **Markdown chaos**: Plans are markdown files that pile up without structure or lifecycle
+- **Issue trackers without thinking**: Systems like Beads (Steve Yegge's git-backed tracker) address markdown problems but don't support deep, thoughtful planning
+- **No analysis phase**: Jumping straight to execution without exploring ideas or comparing approaches
+
+### After: Plans as Lifecycle
+
+- **Standard lifecycle**: Idea exploration → Shaping approaches → Building detailed plan → Execution → Completion
+- **Thinking before execution**: You can't just create a plan and execute it. RiotPlan supports analysis, elaboration, research.
+- **Standard infrastructure**: MCP resources, tools, and prompts that know how to work with plans. Not just a format, but a system.
+- **Tool independence**: Works from CLI with API keys, via MCP with any model, or through future GUI applications.
+
+## What is a RiotPlan?
+
+A **plan** is a construct that manages multi-step AI-assisted tasks:
+
+- **Spans multiple sessions** - Work on a task over days or weeks
+- **Has persistent state** - Track progress in STATUS.md
+- **Organized into steps** - Numbered files (01-STEP.md, 02-STEP.md)
 - **Can be interrupted and resumed** - Pick up where you left off
-- **Support collaboration** - Human reviews, feedback loops
+- **Supports deep thinking** - Idea exploration, approach comparison, analysis before action
 
 ## Plan Structure
 
@@ -249,19 +269,51 @@ riotplan generate ./my-plan --provider anthropic --model claude-sonnet-4-5
 
 ### Configuration
 
-Create `.riotplanrc.json` in your plan directory:
+RiotPlan uses a flexible **four-tier configuration system** to determine where plans are stored:
+
+1. **Environment Variable** (`RIOTPLAN_PLAN_DIRECTORY`) - Highest priority
+2. **Config File** (`riotplan.config.*`, `.riotplan/config.*`, etc.) - Project-level
+3. **Auto-Detection** - Automatically finds `plans/` directory by walking up the tree
+4. **Fallback** - Uses `./plans` in current directory (zero-config experience)
+
+**Quick Start:**
+
+```bash
+# Most users: Just start using RiotPlan - it finds plans/ automatically!
+riotplan create my-feature
+
+# Create a config file (optional)
+riotplan --init-config
+
+# Check current configuration
+riotplan check-config
+```
+
+**Example: `riotplan.config.yaml`**
+
+```yaml
+planDirectory: ./plans
+defaultProvider: anthropic
+defaultModel: claude-3-5-sonnet-20241022
+```
+
+**MCP Server Configuration:**
 
 ```json
 {
-  "defaultProvider": "anthropic",
-  "autoUpdateStatus": true,
-  "stepTemplate": "detailed",
-  "analysis": {
-    "enabled": true,
-    "directory": "analysis"
+  "mcpServers": {
+    "riotplan": {
+      "command": "npx",
+      "args": ["-y", "@riotprompt/riotplan"],
+      "env": {
+        "RIOTPLAN_PLAN_DIRECTORY": "/path/to/plans"
+      }
+    }
   }
 }
 ```
+
+See [Configuration Guide](./guide/configuration.md) for complete documentation.
 
 ## Programmatic Usage
 
@@ -371,11 +423,16 @@ Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
   "mcpServers": {
     "riotplan": {
       "command": "npx",
-      "args": ["-y", "@riotprompt/riotplan", "riotplan-mcp"]
+      "args": ["-y", "@riotprompt/riotplan"],
+      "env": {
+        "RIOTPLAN_PLAN_DIRECTORY": "/path/to/plans"
+      }
     }
   }
 }
 ```
+
+**Zero-Config Experience:** If you don't set `RIOTPLAN_PLAN_DIRECTORY`, RiotPlan will automatically find your `plans/` directory by walking up from your workspace root. No configuration needed!
 
 ### MCP Tools
 
@@ -423,6 +480,30 @@ riotplan_step_start({ path: "./user-auth", step: 1 })
 // ... do the work ...
 riotplan_step_complete({ path: "./user-auth", step: 1 })
 ```
+
+### For AI Assistants: Executing Plans with Tracking
+
+**When executing a RiotPlan, you MUST use RiotPlan's tracking infrastructure:**
+
+1. **Check if step files exist** in `plan/` directory
+   - If `EXECUTION_PLAN.md` exists but step files don't, create them first
+   - Step files (e.g., `01-step.md`, `02-step.md`) are required for tracking
+
+2. **For each step you execute:**
+   - Call `riotplan_step_start({ path, step: N })` **BEFORE** doing any work
+   - Do the actual work (implement, test, document)
+   - Call `riotplan_step_complete({ path, step: N })` **AFTER** completing the work
+   - Let RiotPlan update STATUS.md automatically
+
+3. **Use the `execute_plan` prompt** for guided execution:
+   ```
+   /riotplan/execute_plan
+   ```
+   This provides the complete workflow for executing with tracking.
+
+**Key Principle**: If you're working on a RiotPlan, RiotPlan should manage the execution, not just the planning. Don't just do the work - use the tracking tools!
+
+**Common Mistake**: Executing steps without using `riotplan_step_start` and `riotplan_step_complete`. This bypasses RiotPlan's execution management and breaks progress tracking.
 
 See [guide/mcp.md](./guide/mcp.md) for detailed MCP documentation.
 

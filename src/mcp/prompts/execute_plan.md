@@ -13,6 +13,30 @@ Guide intelligent, high-level plan execution with automatic state management. Th
 
 ## Workflow
 
+### 0. Verify Plan Structure and Step Files
+
+**CRITICAL FIRST STEP**: Before executing, verify that step files exist:
+
+1. **Check if `plan/` directory exists** and contains step files (e.g., `01-step.md`, `02-step.md`)
+2. **If step files don't exist** but `EXECUTION_PLAN.md` exists:
+   - Read `EXECUTION_PLAN.md` to understand the steps
+   - Create the `plan/` directory if it doesn't exist
+   - Create step files from `EXECUTION_PLAN.md`:
+     - Parse the execution plan to extract step information
+     - Create numbered files: `01-{step-title}.md`, `02-{step-title}.md`, etc.
+     - Each step file should contain:
+       - Step title
+       - Objective/goal
+       - Tasks to complete
+       - Acceptance criteria
+       - Any notes from EXECUTION_PLAN.md
+   - Use `riotplan_generate` tool if available, or manually create step files
+3. **If neither step files nor EXECUTION_PLAN.md exist**:
+   - Inform the user that the plan structure is incomplete
+   - Suggest using `riotplan_generate` or `create_plan` to set up the plan properly
+
+**Key Principle**: Never execute a plan without step files. RiotPlan manages execution through step files, not just EXECUTION_PLAN.md.
+
 ### 1. Check Plan Status
 
 **Always start by checking current execution state:**
@@ -104,17 +128,22 @@ Would you like to review the results or is there anything else you'd like to do 
 
 ### 3. Execute Current Step
 
+**CRITICAL**: When executing a step, you MUST use RiotPlan's tracking infrastructure. Do NOT just do the work without tracking.
+
 When working on a step:
 
 #### 3.1 Start the Step
 
-Mark the step as started:
+**ALWAYS mark the step as started BEFORE doing any work:**
+
 ```typescript
 riotplan_step_start({
   path: "./path/to/plan",
   step: N
 })
 ```
+
+This updates STATUS.md and sets timestamps. **Never skip this step** - it's how RiotPlan tracks progress.
 
 #### 3.2 Read Step Details
 
@@ -154,6 +183,8 @@ Let me complete [Criterion 3]..."
 
 #### 3.5 Complete the Step
 
+**ALWAYS mark the step as complete AFTER finishing the work:**
+
 When all tasks and criteria are met:
 
 ```typescript
@@ -162,6 +193,8 @@ riotplan_step_complete({
   step: N
 })
 ```
+
+This updates STATUS.md and advances the plan. **Never skip this step** - completion tracking is essential for RiotPlan.
 
 Confirm completion:
 "Step [N] is complete! [Brief summary of what was accomplished]"
@@ -405,6 +438,18 @@ Step 05 is about creating the MCP tool for checkpoint creation. Let me check wha
 ❌ **Don't**: Complete steps without actually doing the work
 ✅ **Do**: Implement everything specified in the step
 
+❌ **Don't**: Execute steps without using RiotPlan tracking tools
+✅ **Do**: ALWAYS use `riotplan_step_start` before work and `riotplan_step_complete` after work
+
+❌ **Don't**: Just do the work and skip STATUS.md updates
+✅ **Do**: Let RiotPlan manage execution state through its tools
+
+❌ **Don't**: Execute a plan without step files in `plan/` directory
+✅ **Do**: Create step files from EXECUTION_PLAN.md if they don't exist before executing
+
+❌ **Don't**: Treat RiotPlan like a regular task list
+✅ **Do**: Use RiotPlan's infrastructure - step files, STATUS.md, and tracking tools
+
 ## State Transitions
 
 ```
@@ -454,3 +499,26 @@ For plans with independent steps:
 - **Create checkpoints** at key moments for recovery and documentation
 - **Be flexible** - handle interruptions, blockers, and plan changes gracefully
 - The timeline will show the **complete execution journey**, not just the final result
+
+## For AI Assistants: Execution Tracking Requirements
+
+**When a user says "let's execute the plan" or "start working on this plan":**
+
+1. **Check if step files exist** in `plan/` directory
+   - If not, create them from `EXECUTION_PLAN.md` before proceeding
+   - Step files are REQUIRED for RiotPlan execution tracking
+
+2. **For each step you execute:**
+   - Call `riotplan_step_start` with step number BEFORE doing any work
+   - Do the actual work (implement, test, document)
+   - Call `riotplan_step_complete` with step number AFTER completing the work
+   - Let RiotPlan update STATUS.md automatically
+
+3. **Don't just do the work** - Use RiotPlan's infrastructure to track progress
+   - Even if it feels like extra overhead, tracking is essential
+   - STATUS.md must reflect current state
+   - Step files must exist and be used
+
+4. **Key principle**: If you're working on a RiotPlan, RiotPlan should manage the execution, not just the planning.
+
+**Remember**: RiotPlan managed the thinking (idea → shaping → planning), so it should also manage the execution. Use the tools!
