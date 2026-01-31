@@ -2,7 +2,7 @@
  * Execution Module
  *
  * Provides integration with LLM execution providers for automated step execution.
- * This module wraps @riotprompt/execution and provider-specific packages.
+ * This module wraps @kjerneverk/execution and provider-specific packages.
  */
 
 import type { Plan, PlanStep, StepResult } from "../types.js";
@@ -106,7 +106,7 @@ export class MockStepExecutor implements StepExecutor {
  * Create a step executor for the given provider
  *
  * Note: This currently only supports mock execution.
- * Full provider integration requires importing @riotprompt/execution-* packages.
+ * Full provider integration requires importing @kjerneverk/execution-* packages.
  */
 export function createExecutor(config: ProviderConfig): StepExecutor {
     switch (config.type) {
@@ -118,7 +118,7 @@ export function createExecutor(config: ProviderConfig): StepExecutor {
         case "gemini":
             // For real providers, users should import the specific execution package
             throw new Error(
-                `Provider '${config.type}' requires @riotprompt/execution-${config.type} package. ` +
+                `Provider '${config.type}' requires @kjerneverk/execution-${config.type} package. ` +
                     `Import and configure it directly for LLM-powered execution.`
             );
 
