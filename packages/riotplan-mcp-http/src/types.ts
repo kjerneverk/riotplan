@@ -133,6 +133,10 @@ export interface ToolExecutionContext {
     progressToken?: string | number;
     /** Callback to update the shared context (e.g., change working directory) */
     updateContext?: (updates: { workingDirectory?: string; [key: string]: any }) => void;
+    /** Authenticated user context (available when auth is enabled) */
+    authContext?: { user_id: string; allowed_projects?: string[] };
+    /** Plan database repository (available when planDb is configured) */
+    planRepository?: import('@planvokter/riotplan-db').IPlanRepository;
 }
 
 /**

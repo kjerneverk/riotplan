@@ -37,7 +37,9 @@ import { resolveDirectory } from './tools/shared.js';
 import { bindProjectToPlan, getProjectMatchKeys, readProjectBinding } from './tools/project-binding-shared.js';
 import { extractApiKeyFromHeaders, type AuthContext, RbacEngine, type RouteRequirement } from './rbac.js';
 import { verifyTokenAuth, type TokenAuthConfig } from './token-auth.js';
-import type { ITokenRepository } from '@planvokter/riotplan-db';
+import { isJwt, verifyJwt } from './jwt-auth.js';
+import type { ITokenRepository, IPlanRepository } from '@planvokter/riotplan-db';
+import type { IStorageProvider } from '@planvokter/riotplan-storage';
 import Logging from '@fjell/logging';
 
 /**
@@ -81,6 +83,16 @@ export interface ServerConfig {
     /** Token verification via injected ITokenRepository (alternative to RBAC YAML keys) */
     tokenAuth?: {
         tokenRepository: ITokenRepository;
+    };
+    /** JWT shared secret for server-to-server auth (e.g. web proxy) */
+    jwtSecret?: string;
+    /** Plan metadata via injected IPlanRepository (enables user-scoped plan listing) */
+    planDb?: {
+        planRepository: IPlanRepository;
+    };
+    /** Storage provider for cloud object operations (e.g., GCS) */
+    storage?: {
+        provider: IStorageProvider;
     };
 }
 
@@ -361,12 +373,18 @@ function normalizeAllowedProjects(auth: AuthContext | null): string[] {
         .filter(Boolean);
 }
 
+/** Check if the allowed projects list grants access to all projects (wildcard) */
+function isWildcardAccess(allowedProjects: string[]): boolean {
+    return allowedProjects.length === 1 && allowedProjects[0] === '*';
+}
+
 function hasProjectScope(auth: AuthContext | null): boolean {
     return normalizeAllowedProjects(auth).length > 0;
 }
 
 function isProjectAllowed(projectId: string | null | undefined, allowedProjects: string[]): boolean {
     if (!projectId) return false;
+    if (isWildcardAccess(allowedProjects)) return true;
     const normalized = projectId.trim().toLowerCase();
     return allowedProjects.some((allowed) => allowed.toLowerCase() === normalized);
 }
@@ -405,7 +423,7 @@ async function enforceProjectScopeForTool(
 ): Promise<Record<string, unknown>> {
     const scopedArgs = asRecord(args);
     const allowedProjects = normalizeAllowedProjects(authContext);
-    if (allowedProjects.length === 0) {
+    if (allowedProjects.length === 0 || isWildcardAccess(allowedProjects)) {
         return scopedArgs;
     }
 
@@ -481,7 +499,7 @@ function filterProjectScopedToolResult(
     authContext: AuthContext | null
 ): unknown {
     const allowedProjects = normalizeAllowedProjects(authContext);
-    if (allowedProjects.length === 0) {
+    if (allowedProjects.length === 0 || isWildcardAccess(allowedProjects)) {
         return data;
     }
 
@@ -679,6 +697,8 @@ function createMcpServer(plansDir: string, contextDir: string, sessionId: string
                 })()),
                 config,
                 logger: undefined,
+                authContext: authContext ? { user_id: authContext.user_id, allowed_projects: authContext.allowed_projects } : undefined,
+                planRepository: config.planDb?.planRepository,
             };
             const syncSummary = summarizeSyncOutcome(context.syncDown);
             logPhaseTiming(toolLogger, debugEnabled, 'call.cloud_sync_down', {
@@ -1703,7 +1723,10 @@ export function createApp(config: ServerConfig): Hono<{ Variables: AppVariables 
                 return;
             }
 
-            if (!rbacEngine) {
+            // When tokenAuth is configured without RBAC files, use token-only auth
+            const tokenOnlyMode = !rbacEngine && config.tokenAuth;
+
+            if (!rbacEngine && !tokenOnlyMode) {
                 authLogger.error('audit', {
                     timestamp: new Date().toISOString(),
                     route: routePattern,
@@ -1716,6 +1739,102 @@ export function createApp(config: ServerConfig): Hono<{ Variables: AppVariables 
                     elapsedMs: Date.now() - start,
                 });
                 return jsonError(c, 500, 'SERVER_MISCONFIG', 'RBAC is enabled but not initialized');
+            }
+
+            // In token-only mode, skip RBAC requirement checks and go straight to token auth
+            if (tokenOnlyMode) {
+                const apiKey = extractApiKeyFromHeaders(c.req.raw.headers);
+                let authContext: AuthContext | null = null;
+
+                if (apiKey && config.jwtSecret && isJwt(apiKey)) {
+                    const claims = verifyJwt(apiKey, config.jwtSecret);
+                    if (claims) {
+                        authContext = {
+                            user_id: claims.user_id,
+                            key_id: 'jwt',
+                            roles: claims.roles,
+                            allowed_projects: claims.allowed_projects,
+                        };
+                    } else {
+                        authLogger.warning('audit', {
+                            timestamp: new Date().toISOString(),
+                            route: routePattern,
+                            method,
+                            request_id: requestId,
+                            user_id: null,
+                            key_id: null,
+                            decision: 'deny',
+                            reason: 'JWT_INVALID',
+                            elapsedMs: Date.now() - start,
+                        });
+                        return jsonError(c, 401, 'UNAUTHORIZED', 'Invalid JWT token');
+                    }
+                }
+
+                if (apiKey && config.tokenAuth) {
+                    try {
+                        const tokenContext = await verifyTokenAuth(apiKey, config.tokenAuth);
+                        if (tokenContext) {
+                            authContext = tokenContext;
+                        }
+                    } catch (err) {
+                        authLogger.warning('audit', {
+                            timestamp: new Date().toISOString(),
+                            route: routePattern,
+                            method,
+                            request_id: requestId,
+                            user_id: null,
+                            key_id: null,
+                            decision: 'deny',
+                            reason: 'TOKEN_AUTH_ERROR',
+                            error: String(err),
+                            elapsedMs: Date.now() - start,
+                        });
+                    }
+
+                    // Fallback: check legacy API key (rp- prefix) against env var
+                    if (!authContext && apiKey.startsWith('rp-')) {
+                        const legacyKey = process.env.RIOTPLAN_API_KEY;
+                        if (legacyKey && apiKey === legacyKey) {
+                            authContext = {
+                                user_id: 'legacy-api-key',
+                                key_id: 'legacy',
+                                roles: ['admin'],
+                                allowed_projects: ['*'],
+                            };
+                        }
+                    }
+                }
+
+                if (!authContext) {
+                    authLogger.warning('audit', {
+                        timestamp: new Date().toISOString(),
+                        route: routePattern,
+                        method,
+                        request_id: requestId,
+                        user_id: null,
+                        key_id: null,
+                        decision: 'deny',
+                        reason: 'NO_TOKEN',
+                        elapsedMs: Date.now() - start,
+                    });
+                    return jsonError(c, 401, 'UNAUTHORIZED', 'Valid API token required');
+                }
+
+                authLogger.info('audit', {
+                    timestamp: new Date().toISOString(),
+                    route: routePattern,
+                    method,
+                    request_id: requestId,
+                    user_id: authContext.user_id,
+                    key_id: authContext.key_id,
+                    decision: 'allow',
+                    reason: 'TOKEN_AUTH',
+                    elapsedMs: Date.now() - start,
+                });
+                c.set('authContext', authContext);
+                await next();
+                return;
             }
 
             if (!requirement) {
@@ -1751,7 +1870,7 @@ export function createApp(config: ServerConfig): Hono<{ Variables: AppVariables 
             }
 
             const apiKey = extractApiKeyFromHeaders(c.req.raw.headers);
-            let auth = await rbacEngine.authenticate(apiKey);
+            let auth = await rbacEngine!.authenticate(apiKey);
             let authContext: AuthContext | null = auth.authContext ?? null;
 
             // Fallback: try token auth verification for rpat_ tokens
@@ -1797,7 +1916,7 @@ export function createApp(config: ServerConfig): Hono<{ Variables: AppVariables 
                 return jsonError(c, 401, 'UNAUTHORIZED', 'Missing or invalid API key');
             }
 
-            const authorization = rbacEngine.authorize(authContext, requirement.anyRoles);
+            const authorization = rbacEngine!.authorize(authContext, requirement.anyRoles);
             if (!authorization.allowed) {
                 authLogger.warning('audit', {
                     timestamp: new Date().toISOString(),

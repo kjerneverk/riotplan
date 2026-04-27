@@ -14,6 +14,7 @@ import { createSqliteProvider } from '@planvokter/riotplan-format';
 import { executeCreate } from './create.js';
 import { assertNoClientDirectoryOverride } from './shared.js';
 import { getPlanCategory, type PlanCategory } from '@planvokter/riotplan';
+import type { IPlanRepository, AccessContext, Plan as DbPlan, PlanStatus } from '@planvokter/riotplan-db';
 import {
     getProjectMatchKeys,
     getWorkspaceMatchKeys,
@@ -190,7 +191,7 @@ async function executeListPlans(
         assertNoClientDirectoryOverride(args, context, 'riotplan_list_plans');
         const validated = ListPlansSchema.parse(args);
         const searchDir = context.workingDirectory;
-        
+
         const plans: Array<{
             id: string;
             name: string;
@@ -206,25 +207,61 @@ async function executeListPlans(
             projectSource?: 'explicit' | 'inferred' | 'none';
         }> = [];
 
-        const indexedPlans = await listPlansViaIndex(searchDir);
-        for (const plan of indexedPlans) {
-            if (validated.filter && validated.filter !== 'all' && validated.filter !== plan.category) {
-                continue;
+        // Use Firestore-backed planRepository when both it and authContext are available
+        const planRepository = context.planRepository;
+        const authUserId = context.authContext?.user_id;
+
+        if (planRepository && authUserId) {
+            const accessContext: AccessContext = {
+                userId: authUserId,
+                projectIds: context.authContext?.allowed_projects,
+            };
+            const opts: { status?: PlanStatus; limit?: number } = {};
+            if (validated.filter && validated.filter !== 'all') {
+                opts.status = validated.filter;
             }
-            plans.push({
-                id: plan.id || basename(plan.path, '.plan'),
-                name: plan.name || basename(plan.path, '.plan'),
-                path: plan.path,
-                type: 'sqlite',
-                uuid: plan.uuid,
-                title: plan.title,
-                stage: plan.stage,
-                createdAt: toIsoTimestamp(plan.createdAt),
-                updatedAt: toIsoTimestamp(plan.updatedAt),
-                category: plan.category,
-                project: plan.project || null,
-                projectSource: plan.projectSource || 'none',
-            });
+            const dbPlans: DbPlan[] = await planRepository.listAccessible(accessContext, opts);
+
+            for (const plan of dbPlans) {
+                plans.push({
+                    id: plan.id,
+                    name: plan.title || plan.id,
+                    path: plan.id,
+                    type: 'firestore',
+                    uuid: plan.id,
+                    title: plan.title,
+                    stage: plan.status,
+                    createdAt: toIsoTimestamp(plan.createdAt),
+                    updatedAt: toIsoTimestamp(plan.updatedAt),
+                    category: plan.status,
+                    project: plan.projectId
+                        ? { id: plan.projectId, name: plan.projectId, relationship: 'primary' }
+                        : null,
+                    projectSource: plan.projectId ? 'explicit' : 'none',
+                });
+            }
+        } else {
+            // Fall back to filesystem scan
+            const indexedPlans = await listPlansViaIndex(searchDir);
+            for (const plan of indexedPlans) {
+                if (validated.filter && validated.filter !== 'all' && validated.filter !== plan.category) {
+                    continue;
+                }
+                plans.push({
+                    id: plan.id || basename(plan.path, '.plan'),
+                    name: plan.name || basename(plan.path, '.plan'),
+                    path: plan.path,
+                    type: 'sqlite',
+                    uuid: plan.uuid,
+                    title: plan.title,
+                    stage: plan.stage,
+                    createdAt: toIsoTimestamp(plan.createdAt),
+                    updatedAt: toIsoTimestamp(plan.updatedAt),
+                    category: plan.category,
+                    project: plan.project || null,
+                    projectSource: plan.projectSource || 'none',
+                });
+            }
         }
 
         // De-duplicate by plan id.
