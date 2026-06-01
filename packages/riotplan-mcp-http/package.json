@@ -47,7 +47,7 @@
   "dependencies": {
     "@fjell/logging": "^4.4.72",
     "@hono/mcp": "^0.2.4",
-    "@hono/node-server": "^1.19.11",
+    "@hono/node-server": "^2.0.4",
     "@kjerneverk/agentic": "^1.0.9",
     "@kjerneverk/execution": "^1.0.8",
     "@modelcontextprotocol/sdk": "^1.27.1",
@@ -65,8 +65,8 @@
     "commander": "^14.0.3",
     "hono": "^4.12.8",
     "js-yaml": "^4.1.1",
-    "vite": "8.0.3",
-    "vitest": "4.1.2",
+    "vite": "8.0.5",
+    "vitest": "4.1.8",
     "yaml": "^2.8.2",
     "zod": "^4.3.6",
     "@planvokter/riotplan-db": "^1.1.5-dev.0"
