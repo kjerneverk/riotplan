@@ -11,7 +11,8 @@
   "exports": {
     ".": {
       "types": "./dist/riotplan-catalyst.d.ts",
-      "import": "./dist/riotplan-catalyst.js"
+      "import": "./dist/riotplan-catalyst.js",
+      "default": "./dist/riotplan-catalyst.js"
     }
   },
   "engines": {

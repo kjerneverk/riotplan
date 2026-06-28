@@ -12,23 +12,28 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./config": {
       "types": "./src/config/index.d.ts",
-      "import": "./src/config/index.js"
+      "import": "./src/config/index.js",
+      "default": "./src/config/index.js"
     },
     "./plan/category": {
       "types": "./src/plan/category.d.ts",
-      "import": "./src/plan/category.js"
+      "import": "./src/plan/category.js",
+      "default": "./src/plan/category.js"
     },
     "./plan/loader": {
       "types": "./src/plan/loader.d.ts",
-      "import": "./src/plan/loader.js"
+      "import": "./src/plan/loader.js",
+      "default": "./src/plan/loader.js"
     },
     "./status/generator": {
       "types": "./src/status/generator.d.ts",
-      "import": "./src/status/generator.js"
+      "import": "./src/status/generator.js",
+      "default": "./src/status/generator.js"
     }
   },
   "engines": {

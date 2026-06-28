@@ -405,6 +405,7 @@ async function main() {
                 rbacPolicyPath,
                 rbacReloadSeconds,
             },
+            jwtSecret: process.env.RIOTPLAN_JWT_SECRET,
         });
     } catch (error) {
         console.error('Error starting server:', error);

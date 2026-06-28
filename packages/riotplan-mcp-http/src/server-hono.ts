@@ -1067,6 +1067,7 @@ export function createApp(config: ServerConfig): Hono<{ Variables: AppVariables 
     const contextDir = resolveContextDir(config);
     const secured = config.security?.secured === true;
     const rbacEngine = createRbacEngine(config);
+    console.log(`[AUTH] RBAC engine: ${rbacEngine ? 'loaded' : 'not loaded'}, JWT secret: ${config.jwtSecret ? 'configured' : 'NOT configured'}, tokenAuth: ${config.tokenAuth ? 'configured' : 'not configured'}`);
 
     app.use('*', async (c, next) => {
         const existingRequestId = c.req.header('x-request-id');
@@ -1872,6 +1873,20 @@ export function createApp(config: ServerConfig): Hono<{ Variables: AppVariables 
             const apiKey = extractApiKeyFromHeaders(c.req.raw.headers);
             let auth = await rbacEngine!.authenticate(apiKey);
             let authContext: AuthContext | null = auth.authContext ?? null;
+
+            // Fallback: try JWT auth for Bearer tokens
+            if (!auth.allowed && apiKey && config.jwtSecret && isJwt(apiKey)) {
+                const claims = verifyJwt(apiKey, config.jwtSecret);
+                if (claims) {
+                    authContext = {
+                        user_id: claims.user_id,
+                        key_id: 'jwt',
+                        roles: claims.roles,
+                        allowed_projects: claims.allowed_projects,
+                    };
+                    auth = { allowed: true, authContext, reason: 'ALLOW', status: 200 };
+                }
+            }
 
             // Fallback: try token auth verification for rpat_ tokens
             if (!auth.allowed && apiKey && apiKey.startsWith('rpat_') && config.tokenAuth) {
