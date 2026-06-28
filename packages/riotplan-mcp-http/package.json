@@ -24,8 +24,9 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc -p tsconfig.json && npm run measure-tokens:ci",
-    "test": "echo \"No standalone tests yet\"",
-    "test:coverage": "npm run test",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "measure-tokens": "node dist/measure-mcp-tokens.js",
     "measure-tokens:ci": "node dist/measure-mcp-tokens.js --ci",
     "lint": "echo \"No standalone lint yet\"",

@@ -34,7 +34,8 @@ import { getResources, readResource } from './resources/index.js';
 import { parseUri } from './uri.js';
 import { getPrompts, getPrompt } from './prompts/index.js';
 import { resolveDirectory } from './tools/shared.js';
-import { bindProjectToPlan, getProjectMatchKeys, readProjectBinding } from './tools/project-binding-shared.js';
+import { bindProjectToPlan, getProjectMatchKeys, readProjectBinding, type ProjectBinding } from './tools/project-binding-shared.js';
+import { create as createContext } from '@redaksjon/context';
 import { extractApiKeyFromHeaders, type AuthContext, RbacEngine, type RouteRequirement } from './rbac.js';
 import { verifyTokenAuth, type TokenAuthConfig } from './token-auth.js';
 import { isJwt, verifyJwt } from './jwt-auth.js';
@@ -90,6 +91,8 @@ export interface ServerConfig {
     planDb?: {
         planRepository: IPlanRepository;
     };
+    /** Default project binding applied to newly created plans when no explicit binding exists */
+    defaultProject?: ProjectBinding;
     /** Storage provider for cloud object operations (e.g., GCS) */
     storage?: {
         provider: IStorageProvider;
@@ -359,9 +362,14 @@ function isMutatingTool(toolName: string, args?: Record<string, unknown>): boole
 }
 
 const authContextStore = new AsyncLocalStorage<AuthContext | null>();
+const defaultProjectStore = new AsyncLocalStorage<string | null>();
 
 function getActiveAuthContext(): AuthContext | null {
     return authContextStore.getStore() ?? null;
+}
+
+function getActiveDefaultProjectId(): string | null {
+    return defaultProjectStore.getStore() ?? null;
 }
 
 function normalizeAllowedProjects(auth: AuthContext | null): string[] {
@@ -568,6 +576,78 @@ async function postProcessProjectScopedCreate(
     });
 }
 
+/** Exported for testing */
+/**
+ * Apply default project binding to newly created plans when no explicit binding exists.
+ * Reads the per-connection X-Default-Project header first, then falls back to
+ * server-level config.defaultProject. Validates the project exists in context —
+ * throws if the project is not found.
+ */
+async function applyDefaultProjectBinding(
+    toolName: string,
+    args: Record<string, unknown>,
+    result: { success: boolean; data?: unknown },
+    workingDirectory: string,
+    config: ServerConfig
+): Promise<void> {
+    if (!result.success) {
+        return;
+    }
+    const action = typeof args.action === 'string' ? args.action.trim() : '';
+    const isCreate = toolName === 'riotplan_create' || (toolName === 'riotplan_plan' && action === 'create');
+    if (!isCreate) {
+        return;
+    }
+
+    // Determine which default project to use: per-connection header > server config
+    const headerProjectId = getActiveDefaultProjectId();
+    const effectiveProject: ProjectBinding | undefined =
+        headerProjectId
+            ? { id: headerProjectId, relationship: 'primary' }
+            : config.defaultProject;
+    if (!effectiveProject) {
+        return;
+    }
+
+    const data = asRecord(result.data);
+    const planRef = typeof data.planId === 'string'
+        ? data.planId.trim()
+        : typeof data.code === 'string'
+            ? data.code.trim()
+            : '';
+    if (!planRef) {
+        return;
+    }
+
+    const planPath = resolveDirectory({ planId: planRef }, { workingDirectory } as any);
+    const binding = await readProjectBinding(planPath);
+    if (binding?.project) {
+        return; // Already bound — don't override
+    }
+
+    // Validate the project exists in context — don't auto-create
+    const contextDir = config.contextDir || workingDirectory;
+    try {
+        const ctx = await createContext({ startingDir: contextDir });
+        const existing = ctx.getProject(effectiveProject.id);
+        if (!existing) {
+            throw new Error(
+                `Default project '${effectiveProject.id}' not found in context. ` +
+                `Create it first or remove the X-Default-Project header.`
+            );
+        }
+    } catch (err) {
+        // Re-throw validation errors; if context loading itself fails, skip binding
+        if (err instanceof Error && err.message.includes('not found in context')) {
+            throw err;
+        }
+        // Context system unavailable — skip binding silently
+        return;
+    }
+
+    await bindProjectToPlan(planPath, effectiveProject);
+}
+
 async function notifyPlanResourceChanged(planRef: string): Promise<void> {
     const uri = `riotplan://plan/${planRef}`;
     for (const session of sessions.values()) {
@@ -727,6 +807,7 @@ function createMcpServer(plansDir: string, contextDir: string, sessionId: string
             );
             const result = await executeTool(toolName, scopedArgs, context);
             await postProcessProjectScopedCreate(toolName, scopedArgs, result, context.workingDirectory, authContext);
+            await applyDefaultProjectBinding(toolName, scopedArgs, result, context.workingDirectory, config);
             logPhaseTiming(toolLogger, debugEnabled, 'call.execute', {
                 sessionId,
                 tool: toolName,
@@ -1419,9 +1500,13 @@ export function createApp(config: ServerConfig): Hono<{ Variables: AppVariables 
 
             const transportStartedAt = Date.now();
             const requestAuthContext = (c.get('authContext') as AuthContext | undefined) ?? null;
+            const headerDefaultProject = c.req.header('X-Default-Project')?.trim() || null;
             const response = await authContextStore.run(
                 requestAuthContext,
-                () => session.transport.handleRequest(c)
+                () => defaultProjectStore.run(
+                    headerDefaultProject,
+                    () => session.transport.handleRequest(c)
+                )
             );
             logPhaseTiming(requestLogger, debugEnabled, 'request.transport', {
                 method,
@@ -1976,6 +2061,12 @@ export function createApp(config: ServerConfig): Hono<{ Variables: AppVariables 
 
     return app;
 }
+
+/** Exported for testing */
+export const __test__ = {
+    applyDefaultProjectBinding,
+    defaultProjectStore,
+};
 
 /**
  * Start the HTTP server
