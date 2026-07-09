@@ -1,5 +1,5 @@
 // Types
-export type { User } from './types/user.js';
+export type { User, UserPreferences, ThemePreference } from './types/user.js';
 export type {
   PersonalAccessToken,
   TokenScope,
