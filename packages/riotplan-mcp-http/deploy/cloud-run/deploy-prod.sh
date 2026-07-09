@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-PROJECT_ID="${PROJECT_ID:-discursive}"
+PROJECT_ID="${PROJECT_ID:?Set PROJECT_ID to your GCP project id}"
 REGION="${REGION:-us-central1}"
 SERVICE_NAME="${SERVICE_NAME:-riotplan-mcp}"
 AR_REPO="${AR_REPO:-riotplan}"

@@ -4,10 +4,9 @@
  * This module is cloud-provider-agnostic. It depends only on the
  * ITokenRepository interface from @planvokter/riotplan-db.
  *
- * The concrete implementation (e.g. FirestoreTokenRepository from
- * @planvokter/riotplan-db-firestore) is injected at deployment time
- * via the `tokenRepository` config option — keeping cloud deps out
- * of the public package.
+ * A concrete implementation (backed by any database) is injected at
+ * deployment time via the `tokenRepository` config option — keeping
+ * backend-specific deps out of this package.
  */
 
 import type { ITokenRepository } from '@planvokter/riotplan-db';

@@ -142,7 +142,7 @@ function firstNonEmpty(...values: Array<string | undefined>): string | undefined
 async function main() {
     // Decode base64 SA credentials if provided (Cloud Run workaround for missing Secret Manager access)
     // NOTE: This is kept for backward compatibility. Deployment-specific entry points
-    // (e.g. riotplan-tobrien) should handle SA credential decoding before importing the server.
+    // should handle SA credential decoding before importing the server.
     if (process.env.GOOGLE_APPLICATION_CREDENTIALS_B64) {
         const decoded = Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS_B64, 'base64').toString('utf8');
         const saPath = '/tmp/service-account.json';
@@ -355,7 +355,7 @@ async function main() {
 
     // Token auth is configured externally via the tokenAuth config option.
     // The CLI entry point does NOT construct a tokenRepository — that is the
-    // responsibility of deployment-specific entry points (e.g. riotplan-tobrien).
+    // responsibility of deployment-specific entry points.
     // When using this CLI directly, secured mode requires RBAC files.
     const hasTokenAuth = false; // CLI mode: no injected token repository
 
