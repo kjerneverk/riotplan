@@ -7,6 +7,18 @@ operation as an MCP tool, resource, or prompt over HTTP using Hono and the
 MCP SDK's `StreamableHTTPTransport`. Clients like Cursor, VS Code extensions,
 and any MCP-compatible agent connect here.
 
+## Installation
+
+```bash
+npm install @planvokter/riotplan-mcp-http
+```
+
+Or run the server directly:
+
+```bash
+npx @planvokter/riotplan-mcp-http --port 3002 --plans-dir /path/to/plans
+```
+
 ## What lives here
 
 ### Server (`src/server-hono.ts`)
@@ -67,32 +79,37 @@ Session management for multi-connection MCP server operation.
 
 ## Dependencies
 
+This package sits at the **top of the RiotPlan dependency graph** — it pulls
+in the whole public stack:
+
 | Package | Role |
 |---|---|
-| `@planvokter/riotplan` | Plan operations, types, AI artifact loading, config, status generation, step mutations, reflection writer, plan loader, plan categories |
-| `@planvokter/riotplan-core` | Core service composition (lifecycle, status, idea, build helpers) -- used by a subset of tools |
+| `@planvokter/riotplan` | Plan operations, types, config, status generation, step mutations, plan loader |
+| `@planvokter/riotplan-core` | Core service composition (lifecycle, status, idea, build helpers) |
 | `@planvokter/riotplan-format` | SQLite provider for direct plan file/step/timeline access |
+| `@planvokter/riotplan-ai` | Server-side AI plan generation |
+| `@planvokter/riotplan-catalyst` | Catalyst loading and merging for catalyst tools |
+| `@planvokter/riotplan-cloud` | Optional GCS mirroring of plan/context directories |
+| `@planvokter/riotplan-db` | Abstract token/user repository interfaces (token auth) |
+| `@planvokter/riotplan-storage` | Abstract object storage interfaces |
 
-`@planvokter/riotplan` is a **runtime dependency** of this package (not a peer):
-installing `@planvokter/riotplan-mcp-http` pulls the framework in automatically.
-That dependency is currently broad — tools import from subpaths like
-`@planvokter/riotplan/ai/artifacts` and `@planvokter/riotplan/config`. A future
-goal is to narrow this so the MCP server depends only on well-defined service
-interfaces rather than reaching into riotplan internals.
+The `riotplan-db` and `riotplan-storage` interfaces have no concrete backend
+in this package — deployments implement them for their backend of choice and
+inject the implementation (see `src/token-auth.ts`).
+
+## Deployment
+
+The server runs anywhere Node 24+ runs. Generic container and Cloud Run
+scaffolding lives in `deploy/` (Dockerfiles, Cloud Build configs, example
+env/RBAC files with placeholder values), and `guide/cloud-run.md` walks
+through a from-scratch Cloud Run deployment.
 
 ## Development
 
-During development, use `npm link` to resolve sibling packages:
+This package is part of the npm-workspaces monorepo — sibling `@planvokter/*`
+packages resolve automatically after `npm ci` at the repo root. Build with
+`npm run build` (also generates the MCP token report) and test with `npm test`.
 
-```bash
-cd ../riotplan && npm link
-cd ../riotplan-core && npm link
-cd ../riotplan-mcp-http && npm link @planvokter/riotplan @planvokter/riotplan-core @planvokter/riotplan-format
-```
+## License
 
-## Status
-
-Extraction in progress. Source code is real (copied from `riotplan/src/mcp/`
-with imports rewritten to use package paths). The identical source still
-exists in `riotplan/src/mcp/` and is tested through the `riotplan` test
-suite. Standalone build, tests, and npm publishing are not yet configured.
+Apache-2.0

@@ -2,7 +2,7 @@
 
 SQLite-based storage format for RiotPlan with dual format support.
 
-This package provides a storage abstraction layer that supports both directory-based and SQLite `.plan` formats for RiotPlan plans.
+This package provides a storage abstraction layer that supports both directory-based and SQLite `.plan` formats for RiotPlan plans. It is the foundation of the [RiotPlan monorepo](https://github.com/planvokter/riotplan)'s storage stack: `@planvokter/riotplan-core`, `@planvokter/riotplan-ai`, `@planvokter/riotplan`, and `@planvokter/riotplan-mcp-http` all build on it.
 
 ## Installation
 
@@ -218,4 +218,4 @@ Schema version tracking enables future migrations.
 
 ## License
 
-MIT
+Apache-2.0

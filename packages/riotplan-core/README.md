@@ -7,6 +7,12 @@ transport layer (HTTP, CLI, etc.). It defines the contracts other packages
 program against and provides the default implementations backed by
 `@planvokter/riotplan-format` (SQLite).
 
+## Installation
+
+```bash
+npm install @planvokter/riotplan-core
+```
+
 ## What lives here
 
 ### Contracts (`src/contracts/`)
@@ -25,15 +31,21 @@ plan data. Nothing in this layer depends on SQLite, HTTP, or any framework.
 ### Services (`src/services/`)
 
 Stateless functions that implement domain operations. Each service works
-against the contracts above or directly against `@planvokter/riotplan` for
-directory-based plan operations that haven't been abstracted yet.
+against the contracts above. Directory-based step operations take their plan
+primitives (`loadPlan`, `generateStatus`, step mutations) as injected
+dependencies, so this package has no dependency on `@planvokter/riotplan`.
 
 - **lifecycle** -- SQLite stage transitions with timeline logging.
-- **steps** -- directory-based step start/complete/add/remove/move with
-  STATUS.md regeneration.
+- **steps** -- step start/complete/add/remove/move with STATUS.md
+  regeneration (directory plans, via injected deps).
 - **status** -- read a status snapshot from a SQLite plan.
 - **idea** -- append bullets to IDEA.md sections inside a SQLite plan.
 - **build** -- resolve project root for plan generation context.
+
+### Artifacts (`src/artifacts/`)
+
+Generic read/write for typed plan documents (IDEA.md, SHAPING.md, STATUS.md,
+etc.) via SQLite `.plan` storage.
 
 ### Adapters (`src/adapters/`)
 
@@ -49,12 +61,17 @@ dependency-injection root for consumers.
 
 | Package | Role |
 |---|---|
-| `@planvokter/riotplan` | Types (`PlanStep`, `TaskStatus`, etc.) and directory-based plan operations (`loadPlan`, `generateStatus`, step mutations) |
 | `@planvokter/riotplan-format` | SQLite provider (`createSqliteProvider`) |
 
-## Status
+## Ecosystem
 
-Extraction in progress. The code here is real and tested through the
-`riotplan` test suite (which still contains the identical source under
-`src/core/`). Standalone build, tests, and npm publishing are not yet
-configured.
+Part of the [RiotPlan monorepo](https://github.com/planvokter/riotplan). Sits
+in the middle layer of the dependency graph: above `@planvokter/riotplan-format`,
+below `@planvokter/riotplan` (CLI) and `@planvokter/riotplan-mcp-http` (HTTP
+MCP server), both of which consume these services. The package builds with
+plain `tsc`; it is exercised through the `riotplan` and `riotplan-mcp-http`
+test suites and does not yet have standalone tests.
+
+## License
+
+Apache-2.0

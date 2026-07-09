@@ -107,8 +107,11 @@ packages/riotplan-<name>/
 
 ### Packages Without Vite
 
-- **riotplan-core** — no `vite.config.ts`, no tests (pure TypeScript library)
-- **riotplan-mcp-http** — no `vite.config.ts`, no tests (HTTP server entry point)
+These packages build with plain `tsc` instead of Vite:
+
+- **riotplan-core** — pure TypeScript library, no standalone tests yet
+- **riotplan-db**, **riotplan-storage** — interface-only packages, no standalone tests yet
+- **riotplan-mcp-http** — HTTP server entry point (has Vitest tests; build also runs the MCP token measurement)
 
 ## Scripts
 
@@ -222,12 +225,10 @@ git checkout working
 
 These repos live outside this monorepo under the `planvokter/` org:
 
-- `riotplan-vscode` — VS Code extension
-- `riotplan-osx` — Native macOS integration
-- `riotplan-e2e` — End-to-end tests
-- `riotplan-web` — Web application
-- `riotplan-db-firestore` — Firestore implementation of the `riotplan-db` interfaces
-- `riotplan-storage-gcs` — Google Cloud Storage implementation of the `riotplan-storage` interfaces
+- [`riotplan-vscode`](https://github.com/planvokter/riotplan-vscode) — VS Code extension (HTTP MCP client)
+- [`riotplan-e2e`](https://github.com/planvokter/riotplan-e2e) — End-to-end tests against `riotplan-mcp-http`
+
+The `riotplan-db` and `riotplan-storage` packages define abstract interfaces that can be implemented for any backend (e.g. cloud databases or object storage) and injected at deployment time.
 
 ## License
 

@@ -2,7 +2,7 @@
 
 Abstract data access interfaces, types, and auth utilities for RiotPlan.
 
-This package defines the **contracts** for the RiotPlan data access layer — interfaces, types, and pure-utility functions with zero cloud dependencies. Concrete implementations (e.g., `@planvokter/riotplan-db-firestore`) depend on this package and provide the actual storage backend.
+This package defines the **contracts** for the RiotPlan data access layer — interfaces, types, and pure-utility functions with zero cloud dependencies. Consumers implement these interfaces for their backend of choice (any relational, document, or cloud database) and inject the implementation at deployment time — for example into `@planvokter/riotplan-mcp-http`'s token auth.
 
 ## Installation
 
