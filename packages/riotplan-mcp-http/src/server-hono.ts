@@ -1148,7 +1148,6 @@ export function createApp(config: ServerConfig): Hono<{ Variables: AppVariables 
     const contextDir = resolveContextDir(config);
     const secured = config.security?.secured === true;
     const rbacEngine = createRbacEngine(config);
-    console.log(`[AUTH] RBAC engine: ${rbacEngine ? 'loaded' : 'not loaded'}, JWT secret: ${config.jwtSecret ? 'configured' : 'NOT configured'}, tokenAuth: ${config.tokenAuth ? 'configured' : 'not configured'}`);
 
     app.use('*', async (c, next) => {
         const existingRequestId = c.req.header('x-request-id');
